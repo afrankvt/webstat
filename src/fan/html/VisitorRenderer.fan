@@ -11,12 +11,13 @@ using web
 **
 ** VisitorRenderer renders visitor stats.
 **
+@Js
 class VisitorRenderer
 {
-  ** Construct new HtmlRenderer for given weblog and render HTML markup
-  ** to given output stream.
+  ** Construct new VisitorRenderer for HtmlRenderer.
   new make(HtmlRenderer r)
   {
+    this.dates = r.dates
     this.entries = r.entries.findAll |e|
     {
       stem := e["cs-uri-stem"]?.val
@@ -24,6 +25,7 @@ class VisitorRenderer
 
       if (stem.endsWith(".css")) return false
       if (stem.endsWith(".png")) return false
+      if (stem.endsWith(".jpg")) return false
       if (stem.endsWith(".gif")) return false
       if (stem.endsWith(".js"))  return false
       return true
@@ -33,34 +35,37 @@ class VisitorRenderer
   ** Write content.
   Void write(WebOutStream out)
   {
-    pageViews := toPageViews("2012-06")
-    uniques   := toUniques("2012-06")
+    pageViews := toPageViews
+    uniques   := toUniques
     reqs      := toReqs
     mostReqs  := reqs.sortr |a,b| { a.count <=> b.count }
 
-    out.h1.w("Visitors").h1End
-    out.h2.w("Page Views").h2End
+    out.h2("id='visitors'").w("Visitors").h2End
+    out.div("class='section'")
+
+    out.h3.w("Page Views").h3End
     out.p.w("Total pageviews this month: $entries.size.toLocale").pEnd
     BarPlot(pageViews).write(out)
 
-    out.h2.w("Unique Visitors").h2End
+    out.h3.w("Unique Visitors").h3End
     out.p.w("Total unique visitors this month: $totalUnique.toLocale").pEnd
     BarPlot(uniques).write(out)
 
-    out.h2.w("Most Requested Pages").h2End
-    // mostReqChart(mostReqs),
-    // mostReqTable(mostReqs),
+    out.h3.w("Most Requested Pages").h3End
+    mostReqChart(out, mostReqs)
+    mostReqTable(out, mostReqs)
+
+    out.divEnd  // div.section
   }
 
 //////////////////////////////////////////////////////////////////////////
 // Page Views
 //////////////////////////////////////////////////////////////////////////
 
-  private Obj:Int toPageViews(Str month)
+  private Obj:Int toPageViews()
   {
     m := Obj:Int[:] { ordered=true }
-    d := Date.fromLocale("${month}-01", "YYYY-MM-DD")
-    d.month.numDays(d.year).times |i| { m[i+1] = 0 }
+    dates.numDays.times |i| { m[i+1] = 0 }
     entries.each |entry|
     {
       v := toDate(entry["date"]?.val)
@@ -74,12 +79,11 @@ class VisitorRenderer
 // Unique Visitors
 //////////////////////////////////////////////////////////////////////////
 
-  private Obj:Int toUniques(Str month)
+  private Obj:Int toUniques()
   {
     counted := Str:[Date:Bool][:] // ipAddr:Date
     data    := Obj:Int[:]
-    thisMonth := Date.fromLocale("${month}-01", "YYYY-MM-DD")
-    thisMonth.month.numDays(thisMonth.year).times |i| { data[i+1] = 0 }
+    dates.numDays.times |i| { data[i+1] = 0 }
 
     entries.each |entry|
     {
@@ -120,39 +124,34 @@ class VisitorRenderer
     return map.keys.map |k| {  StatReq { uri=k; count=map[k] }}
   }
 
-  // private Widget mostReqChart(StatReq[] reqs)
-  // {
-  //   data := Obj:Int[:]
-  //   end  := reqs.size.min(30)
-  //   reqs.eachRange(0..<end) |req,i| { data[i+1] = req.count }
-  //   return BarChart(data)
-  // }
-  //
-  // private Widget mostReqTable(StatReq[] reqs)
-  // {
-  //   buf := StrBuf()
-  //   out := WebOutStream(buf.out)
-  //   td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
-  //
-  //   end := reqs.size.min(30)
-  //   out.table("style='border-spacing: 0px; border-collapse: collapse;'")
-  //     .tr
-  //     .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd
-  //     .td("style='$td background:#f8f8f8; text-align:right'").b.w("Reqs").bEnd.tdEnd
-  //     .td("style='$td background:#f8f8f8;'").b.w("Page").bEnd.tdEnd
-  //     .trEnd
-  //   reqs.eachRange(0..<end) |req,i|
-  //   {
-  //     out.tr
-  //       .td("style='$td'").w("${i+1}.").tdEnd
-  //       .td("style='$td background:#f8f8f8; text-align:right'").w(req.count).tdEnd
-  //       .td("style='$td'").w(req.uri.toXml).tdEnd
-  //       .trEnd
-  //   }
-  //   out.tableEnd
-  //
-  //   return HtmlPane { html=buf.toStr }
-  // }
+  private Void mostReqChart(WebOutStream out, StatReq[] reqs)
+  {
+    data := Obj:Int[:]
+    end  := reqs.size.min(30)
+    reqs.eachRange(0..<end) |req,i| { data[i+1] = req.count }
+    BarPlot(data).write(out)
+  }
+
+  private Void mostReqTable(WebOutStream out, StatReq[] reqs)
+  {
+    td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
+    end := reqs.size.min(30)
+    out.table("style='margin:1em 0; border-spacing: 0px; border-collapse: collapse;'")
+      .tr
+      .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; text-align:right'").b.w("Reqs").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8;'").b.w("Page").bEnd.tdEnd
+      .trEnd
+    reqs.eachRange(0..<end) |req,i|
+    {
+      out.tr
+        .td("style='$td'").w("${i+1}.").tdEnd
+        .td("style='$td background:#f8f8f8; text-align:right'").w(req.count.toLocale).tdEnd
+        .td("style='$td'").w(req.uri.toXml).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+  }
 
 //////////////////////////////////////////////////////////////////////////
 // Fields
@@ -165,13 +164,15 @@ class VisitorRenderer
            Date.fromLocale(val, "DD-MM-YYYY", false)
   }
 
-  private LogEntry[] entries
+  private const DateSpan dates
+  private const LogEntry[] entries
   private Int totalUnique := 0
 }
 
 **************************************************************************
 ** StatReq
 **************************************************************************
+@Js
 internal class StatReq
 {
   Str uri   := ""

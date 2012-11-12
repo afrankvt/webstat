@@ -21,9 +21,14 @@ class Main
     file := Env.cur.args.getSafe(1)
     out  := file?.toUri?.toFile?.out ?: Env.cur.out
 
+    domain  := "fantom.org"
     entries := LogReader().read(log.in)
-    HtmlRenderer(entries).writeAll(out)
 
+    // TODO FIXIT: walk over each month
+    date  := Date.fromLocale(entries.first["date"].val, "DD-MM-YYYY")
+    dates := DateSpan.makeMonth(date)
+    entries = entries.findAll |e| { dates.contains(Date.fromLocale(e["date"].val, "DD-MM-YYYY")) }
+    HtmlRenderer(domain, dates, entries).writeAll(out)
     return 0
   }
 

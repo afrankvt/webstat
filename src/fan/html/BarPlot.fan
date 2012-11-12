@@ -33,7 +33,7 @@ internal class BarPlot
     h := 100
 
     style := "style='float:left; width:${w}px; height:${h+48}px; position: relative; background:#f8f8f8; margin-right:2px;'"
-    out.div("style='font-size:70%'")
+    out.div("style='margin:1em 0; font-size:70%'")
 
     keys.each |k|
     {

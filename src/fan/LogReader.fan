@@ -103,7 +103,16 @@ class LogReader
       if (s[start] == '\"')
       {
         // parse string
-        while (end<size-1 && s[end+1] != '\"') end++
+        while (end < size-1)
+        {
+          // end quote must be followed by space or EOL
+          if (s[end+1] == '\"')
+          {
+            if (end+2 == size) break
+            if (s[end+2] == ' ') break
+          }
+          end++
+        }
         val = s[start+1..end]
         end++
       }
