@@ -24,10 +24,12 @@ class Main
     entries := LogReader().read(log.in)
 
     // TODO FIXIT: walk over each month?
-    date  := Date.fromLocale(entries.first["date"].val, "DD-MM-YYYY")
+    date  := Util.toDate(entries.first["date"].val)
     dates := DateSpan.makeMonth(date)
-    entries = entries.findAll |e| { dates.contains(Date.fromLocale(e["date"].val, "DD-MM-YYYY")) }
+    entries = entries.findAll |e| { dates.contains(Util.toDate(e["date"].val)) }
     HtmlRenderer(domain, dates, entries).writeAll(out)
+
+    out.flush
     return 0
   }
 

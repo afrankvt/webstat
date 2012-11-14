@@ -68,8 +68,9 @@ class VisitorRenderer
     dates.numDays.times |i| { m[i+1] = 0 }
     entries.each |entry|
     {
-      v := toDate(entry["date"]?.val)
+      v := Util.toDate(entry["date"]?.val)
       if (v == null) return
+if (m[v.day] == null) echo("$dates -- $v -- $dates.numDays")
       m[v.day] = m[v.day] + 1
     }
     return m
@@ -93,7 +94,7 @@ class VisitorRenderer
       if (ip == null) return
 
       // check for valid date
-      date := toDate(entry["date"]?.val)
+      date := Util.toDate(entry["date"]?.val)
       if (date == null) return
 
       // verify this ip not counted yet
@@ -156,13 +157,6 @@ class VisitorRenderer
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
-
-  private Date? toDate(Str? val)
-  {
-    if (val == null) return null
-    return Date.fromLocale(val, "YYYY-MM-DD", false) ?:
-           Date.fromLocale(val, "DD-MM-YYYY", false)
-  }
 
   private const DateSpan dates
   private const LogEntry[] entries
