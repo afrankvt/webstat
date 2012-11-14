@@ -60,6 +60,7 @@ class HtmlRenderer
 
          h2 { margin:1em; border-bottom: 1px solid #ccc; }
          div.section { margin: 1em 1em 1em 2em; }
+         div.section table { margin:1em 0; }
          ").styleEnd
       .headEnd
     wout.body
@@ -70,11 +71,13 @@ class HtmlRenderer
       .ul
         .li.a(`#visitors`).w("Visitors").aEnd.liEnd
         .li.a(`#referrers`).w("Referrers").aEnd.liEnd
+        .li.a(`#userAgents`).w("User-Agents").aEnd.liEnd
         .ulEnd
       .divEnd // div.header
 
     VisitorRenderer(this).write(wout)
     ReferrerRenderer(this).write(wout)
+    UserAgentRenderer(this).write(wout)
 
     wout.bodyEnd
     wout.htmlEnd
