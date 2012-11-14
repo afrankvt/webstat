@@ -66,7 +66,7 @@ class ReferrerRenderer
 
       uri  := e["cs(Referer)"].val
       ref  := map[uri] ?: StatRef { it.uri=uri }
-      date := toDate(e["date"].val)
+      date := Util.toDate(e["date"].val)
       time := Time.fromStr(e["time"].val, false)
 
       DateTime? last
@@ -197,14 +197,6 @@ class ReferrerRenderer
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////
-
-  // TODO FIXIT: pull out into util...
-  private Date? toDate(Str? val)
-  {
-    if (val == null) return null
-    return Date.fromLocale(val, "YYYY-MM-DD", false) ?:
-           Date.fromLocale(val, "DD-MM-YYYY", false)
-  }
 
   private const LogEntry[] entries
   private const Str self   // this domain w/o www prefix

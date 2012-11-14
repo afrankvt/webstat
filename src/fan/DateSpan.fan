@@ -37,7 +37,7 @@ const class DateSpan
   Bool contains(Date d) { d >= start && d <= end }
 
   ** Return number of days in this date span.
-  Int numDays() { (end - start).toDay }
+  Int numDays() { (end - start).toDay + 1 }
 
   ** String representation.
   override Str toStr() { "${start}..${end}" }
