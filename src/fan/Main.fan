@@ -13,18 +13,17 @@ class Main
 {
   Int main()
   {
-    if (Env.cur.args.size < 1) { help; return -1 }
+    if (Env.cur.args.size < 2) { help; return -1 }
 
-    log := Env.cur.args.first.toUri.toFile
+    domain := Env.cur.args[0]
+    log := Env.cur.args[1].toUri.toFile
     if (!log.exists) { echo("file not found: $log"); return -1 }
 
-    file := Env.cur.args.getSafe(1)
+    file := Env.cur.args.getSafe(2)
     out  := file?.toUri?.toFile?.out ?: Env.cur.out
-
-    domain  := "fantom.org"
     entries := LogReader().read(log.in)
 
-    // TODO FIXIT: walk over each month
+    // TODO FIXIT: walk over each month?
     date  := Date.fromLocale(entries.first["date"].val, "DD-MM-YYYY")
     dates := DateSpan.makeMonth(date)
     entries = entries.findAll |e| { dates.contains(Date.fromLocale(e["date"].val, "DD-MM-YYYY")) }
@@ -35,7 +34,8 @@ class Main
   Void help()
   {
     echo("webLogView $typeof.pod.version")
-    echo("usage: fan webLogView <logfile> [outputHtml]")
+    echo("usage: fan webLogView <domain> <logfile> [outputHtml]")
+    echo("  domain:      Domain name of website")
     echo("  logfile:     W3C extended log file format log file")
     echo("  outputHtml:  File to output HTML, or stdout if not given")
   }
