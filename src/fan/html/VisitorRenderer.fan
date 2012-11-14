@@ -70,7 +70,6 @@ class VisitorRenderer
     {
       v := Util.toDate(entry["date"]?.val)
       if (v == null) return
-if (m[v.day] == null) echo("$dates -- $v -- $dates.numDays")
       m[v.day] = m[v.day] + 1
     }
     return m
@@ -82,8 +81,8 @@ if (m[v.day] == null) echo("$dates -- $v -- $dates.numDays")
 
   private Obj:Int toUniques()
   {
-    counted := Str:[Date:Bool][:] // ipAddr:Date
-    data    := Obj:Int[:]
+    counted := Str:[Date:Bool][:]  // ipAddr:Date
+    data    := Obj:Int[:] { ordered=true }
     dates.numDays.times |i| { data[i+1] = 0 }
 
     entries.each |entry|
@@ -116,7 +115,7 @@ if (m[v.day] == null) echo("$dates -- $v -- $dates.numDays")
 
   private StatReq[] toReqs()
   {
-    map := Str:Int[:]
+    map := Str:Int[:] { ordered=true }
     entries.each |e|
     {
       uri := e["cs-uri-stem"].val
@@ -127,7 +126,7 @@ if (m[v.day] == null) echo("$dates -- $v -- $dates.numDays")
 
   private Void mostReqChart(WebOutStream out, StatReq[] reqs)
   {
-    data := Obj:Int[:]
+    data := Obj:Int[:] { ordered=true }
     end  := reqs.size.min(30)
     reqs.eachRange(0..<end) |req,i| { data[i+1] = req.count }
     BarPlot(data).write(out)
