@@ -35,8 +35,8 @@ class Main
 
   Void help()
   {
-    echo("webLogView $typeof.pod.version")
-    echo("usage: fan webLogView <domain> <logfile> [outputHtml]")
+    echo("webStats $typeof.pod.version")
+    echo("usage: fan webStats <domain> <logfile> [outputHtml]")
     echo("  domain:      Domain name of website")
     echo("  logfile:     W3C extended log file format log file")
     echo("  outputHtml:  File to output HTML, or stdout if not given")

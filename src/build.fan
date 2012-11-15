@@ -10,14 +10,14 @@
 using build
 
 **
-** Build: webLogView
+** Build: webStats
 **
 class Build : BuildPod
 {
   new make()
   {
-    podName = "webLogView"
-    summary = "W3C Extended Log Analyzer and Viewer"
+    podName = "webStats"
+    summary = "W3C Extended Log Analyzer"
     version = Version("1.0")
     depends = ["sys 1.0", "util 1.0", "concurrent 1.0", "web 1.0"]
     srcDirs = [`fan/`, `fan/html/`]
