@@ -1,4 +1,4 @@
-# webLogView
+# webStats
 
 A native [Fantom](http://fantom.org) web log parser/analyzer/viewer for W3C
 extended log file format weblogs.  This is particularly designed to be used
@@ -10,9 +10,9 @@ also a very low priority project - so don't expect updates often ;)
 
 ## Usage:
 
-    $ fan webLogView
-    webLogView 1.0
-    usage: fan webLogView <domain> <logfile> [outputHtml]
+    $ fan webStats
+    webStats 1.0
+    usage: fan webStats <domain> <logfile> [outputHtml]
       domain:      Domain name of website
       logfile:     W3C extended log file format log file
       outputHtml:  File to output HTML, or stdout if not given
