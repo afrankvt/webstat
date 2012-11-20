@@ -6,40 +6,51 @@
 //   8 Oct 2012  Andy Frank  Creation
 //
 
+using util
+
 **
 ** Entry-point to render default HTML view of logs.
 **
-class Main
+class Main : AbstractMain
 {
-  Int main()
+  @Arg { help="W3C extended log file format log file to analyze" }
+  File? logFile
+
+  @Opt { help="Domain name of website (comma-sep list allowed)" }
+  Str domain := ""
+
+  @Opt { help="Write HTML output to directory (defaults to stdout)" }
+  File? outDir
+
+  override Int run()
   {
-    if (Env.cur.args.size < 2) { help; return -1 }
+    // check and parse logFile
+    if (!logFile.exists) { echo("file not found: $logFile"); return -1 }
+    entries := LogReader().read(logFile.in)
 
-    domain := Env.cur.args[0]
-    log := Env.cur.args[1].toUri.toFile
-    if (!log.exists) { echo("file not found: $log"); return -1 }
+    // check domains
+    // domains := domain?.split(',')?.map |s| { s.trim } ?: Str#.emptyList
 
-    file := Env.cur.args.getSafe(2)
-    out  := file?.toUri?.toFile?.out ?: Env.cur.out
-    entries := LogReader().read(log.in)
-
-    // TODO FIXIT: walk over each month?
+    // only parse the first month of log
     date  := Util.toDate(entries.first["date"].val)
     dates := DateSpan.makeMonth(date)
     entries = entries.findAll |e| { dates.contains(Util.toDate(e["date"].val)) }
-    HtmlRenderer(domain, dates, entries).writeAll(out)
 
+    // check out redirect
+    out := Env.cur.out
+    if (outDir != null)
+    {
+      name := "webStats-" + (domain.isEmpty ? "" : "$domain-") + date.toLocale("YYYY-MM") + ".html"
+      file := outDir + name.toUri
+      if (!file.exists) file.create
+      out = file.out
+      echo("Writing output to $file")
+    }
+
+    // render HTML to out
+    HtmlRenderer(domain, dates, entries).writeAll(out)
     out.flush
     return 0
-  }
-
-  Void help()
-  {
-    echo("webStats $typeof.pod.version")
-    echo("usage: fan webStats <domain> <logfile> [outputHtml]")
-    echo("  domain:      Domain name of website")
-    echo("  logfile:     W3C extended log file format log file")
-    echo("  outputHtml:  File to output HTML, or stdout if not given")
   }
 }
 
