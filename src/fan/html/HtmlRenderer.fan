@@ -36,6 +36,8 @@ class HtmlRenderer
   Void writeAll(OutStream out)
   {
     wout := WebOutStream(out)
+    prev := (dates.start - 1day).firstOfMonth.toLocale("YYYY-MM")
+    next := (dates.end + 1day).firstOfMonth.toLocale("YYYY-MM")
 
     wout.w("<!doctype html>").nl
     wout.html
@@ -54,6 +56,7 @@ class HtmlRenderer
            z-index:100;
          }
          div.header h1 { margin: 0 0 0.5em 0; }
+         div.header h1 + ul { float: right; padding-right: 1em; }
          div.header ul { list-style: none; padding: 0; margin: 0; font-size: 120%; }
          div.header ul li { display: inline-block; padding: 0; margin: 0 1em 0 0; }
          div.header + h2 { margin-top: 125px; }
@@ -68,6 +71,10 @@ class HtmlRenderer
     wout
       .div("class='header'")
       .h1.w("$domain.toXml &ndash; $dates").h1End
+      .ul
+        .li.a(`webStats-$domain-${prev}.html`).w("< $prev").aEnd.liEnd
+        .li.a(`webStats-$domain-${next}.html`).w("$next >").aEnd.liEnd
+        .ulEnd
       .ul
         .li.a(`#visitors`).w("Visitors").aEnd.liEnd
         .li.a(`#referrers`).w("Referrers").aEnd.liEnd
