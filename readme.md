@@ -10,12 +10,16 @@ also a very low priority project - so don't expect updates often ;)
 
 ## Usage:
 
-    $ fan webStats
-    webStats 1.0
-    usage: fan webStats <domain> <logfile> [outputHtml]
-      domain:      Domain name of website
-      logfile:     W3C extended log file format log file
-      outputHtml:  File to output HTML, or stdout if not given
+  $ fan webStats
+
+  Usage:
+    webStats [options] <logFile>
+  Arguments:
+    logFile    W3C extended log file format log file to analyze
+  Options:
+    -help, -?         Print usage help
+    -domain <Str>     Domain name of website
+    -outDir <File>    Write HTML output to directory (defaults to stdout)
 
 ## License
 
