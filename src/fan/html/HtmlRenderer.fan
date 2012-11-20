@@ -23,7 +23,7 @@ class HtmlRenderer
     this.entries = entries
   }
 
-  ** Domain name for site..
+  ** Domain name for site.
   const Str domain
 
   ** Date span.
