@@ -16,7 +16,7 @@ class Main : AbstractMain
   @Arg { help="W3C extended log file format log file to analyze" }
   File? logFile
 
-  @Opt { help="Domain name of website (comma-sep list allowed)" }
+  @Opt { help="Domain name of website" }
   Str domain := ""
 
   @Opt { help="Write HTML output to directory (defaults to stdout)" }
