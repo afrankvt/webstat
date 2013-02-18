@@ -69,7 +69,7 @@ class VisitorRenderer
     dates.numDays.times |i| { m[i+1] = 0 }
     entries.each |entry|
     {
-      v := Util.toDate(entry["date"]?.val)
+      v := Util.toDateTime(entry)?.date
       if (v == null) return
       m[v.day] = m[v.day] + 1
     }
@@ -93,7 +93,7 @@ class VisitorRenderer
       if (val == null) return
 
       // check for valid date
-      date := Util.toDate(entry["date"]?.val)
+      date := Util.toDateTime(entry)?.date
       if (date == null) return
 
       // verify this ip not counted yet

@@ -35,9 +35,9 @@ class Main : AbstractMain
     // domains := domain?.split(',')?.map |s| { s.trim } ?: Str#.emptyList
 
     // only parse the first month of log
-    date  := Util.toDate(entries.first["date"].val)
+    date  := Util.toDateTime(entries.first).date
     dates := DateSpan.makeMonth(date)
-    entries = entries.findAll |e| { dates.contains(Util.toDate(e["date"].val)) }
+    entries = entries.findAll |e| { dates.contains(Util.toDateTime(e).date) }
 
     // check out redirect
     out := Env.cur.out

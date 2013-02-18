@@ -66,7 +66,7 @@ class ReferrerRenderer
 
       uri  := e["cs(Referer)"].val
       ref  := map[uri] ?: StatRef { it.uri=uri }
-      date := Util.toDate(e["date"].val)
+      date := Util.toDateTime(e)?.date
       time := Time.fromStr(e["time"].val, false)
 
       DateTime? last
