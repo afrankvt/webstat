@@ -18,6 +18,7 @@ class VisitorRenderer
   new make(HtmlRenderer r)
   {
     this.dates = r.dates
+    this.unique = r.unique
     this.entries = r.entries.findAll |e|
     {
       stem := e["cs-uri-stem"]?.val
@@ -87,18 +88,17 @@ class VisitorRenderer
 
     entries.each |entry|
     {
-      // check for valid ip
-      ipEntry := entry["cs(X-Real-IP)"] ?: entry["c-ip"]
-      ip := ipEntry==null ? null : ipEntry.val  // workaround for safe field bug
-      if (ip == null) return
+      // check for unqiue value to compare
+      val := uniqueVal(entry)
+      if (val == null) return
 
       // check for valid date
       date := Util.toDate(entry["date"]?.val)
       if (date == null) return
 
       // verify this ip not counted yet
-      byDate := counted[ip]
-      if (byDate == null) counted[ip] = byDate = Date:Bool[:]
+      byDate := counted[val]
+      if (byDate == null) counted[val] = byDate = Date:Bool[:]
       else if (byDate[date] == true) return
 
       byDate[date] = true                  // mark counted
@@ -107,6 +107,25 @@ class VisitorRenderer
 
     totalUnique = counted.size   // set unique for this month
     return data
+  }
+
+  private Str? uniqueVal(LogEntry entry)
+  {
+    // check cookie
+    if (unique != null)
+    {
+      try
+      {
+        str := (entry["cs(Cookie)"]?.val ?: "").replace("\"\"", "\"")
+        map := MimeType.parseParams(str)
+        return map[unique]
+      }
+      catch { return null }
+    }
+
+    // fallback to IP
+    ipEntry := entry["cs(X-Real-IP)"] ?: entry["c-ip"]
+    return ipEntry?.val
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -158,6 +177,7 @@ class VisitorRenderer
 //////////////////////////////////////////////////////////////////////////
 
   private const DateSpan dates
+  private const Str? unique
   private const LogEntry[] entries
   private Int totalUnique := 0
 }

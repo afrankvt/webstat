@@ -16,11 +16,12 @@ class HtmlRenderer
 {
   ** Construct new HtmlRenderer for given weblog and render HTML markup
   ** to given output stream.
-  new make(Str domain, DateSpan dates, LogEntry[] entries)
+  new make(Str domain, DateSpan dates, LogEntry[] entries, |This|? f := null)
   {
     this.domain = domain
     this.dates = dates
     this.entries = entries
+    if (f != null) f(this)
   }
 
   ** Domain name for site.
@@ -31,6 +32,9 @@ class HtmlRenderer
 
   ** Entries to render.
   const LogEntry[] entries
+
+  ** Cookie name to use for uniques, or use IP if not specified.
+  const Str? unique
 
   ** Write all HTML content.
   Void writeAll(OutStream out)

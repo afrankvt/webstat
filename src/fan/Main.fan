@@ -22,6 +22,9 @@ class Main : AbstractMain
   @Opt { help="Write HTML output to directory (defaults to stdout)" }
   File? outDir
 
+  @Opt { help="Cookie name to use for comparing unique users (default uses IP)" }
+  Str? unique
+
   override Int run()
   {
     // check and parse logFile
@@ -48,7 +51,7 @@ class Main : AbstractMain
     }
 
     // render HTML to out
-    HtmlRenderer(domain, dates, entries).writeAll(out)
+    HtmlRenderer(domain, dates, entries) { it.unique=this.unique }.writeAll(out)
     out.flush
     return 0
   }
