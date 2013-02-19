@@ -49,20 +49,35 @@ class UserAgentRenderer
   {
     sets = Str:StatAgentSet[:]
     sets["Firefox"] = StatAgentSet { name="Firefox" }
+    sets["Android"] = StatAgentSet { name="Android" }
     sets["Chrome"]  = StatAgentSet { name="Chrome" }
     sets["Safari"]  = StatAgentSet { name="Safari" }
     sets["Opera"]   = StatAgentSet { name="Opera" }
     sets["IE"]      = StatAgentSet { name="IE" }
     sets["Mobile Safari"] = StatAgentSet { name="Mobile Safari" }
+    sets["Other"]   = StatAgentSet { name="Other" }
 
     // sort agents by product and version
     agents.each |agent|
     {
       ua := UserAgent(agent["cs(User-Agent)"].val)
-      match := ua.products.find |p|
+
+      // check comments
+      comment := ua.comments.find |c|
+      {
+        if (c.startsWith("Android ")) { count("Android", c["Android ".size..-1]); return true }
+        if (c.startsWith("MSIE "))    { count("IE", c["MSIE ".size..-1]); return true }
+        return false
+      }
+
+      // bail if comment matched
+      if (comment != null) return
+
+      // check products
+      product := ua.products.find |p|
       {
         if (p.name == "Firefox") { count("Firefox", p.ver); return true }
-        if (p.name == "Chrome")  { count("Chrome", p.ver);  return true }
+        if (p.name == "Chrome")  { count("Chrome",  p.ver); return true }
         if (p.name == "Safari")
         {
           v := ua.products.find |v| { v.name == "Version" }
@@ -78,12 +93,8 @@ class UserAgentRenderer
         return false
       }
 
-      // check for IE
-      if (match == null)
-      {
-        v := ua.comments.find |c| { c.startsWith("MSIE ") }
-        if (v != null) count("IE", v["MSIE ".size..-1])
-      }
+      // other
+      if (product == null) count("Other", "")
     }
   }
 
@@ -133,7 +144,7 @@ class UserAgentRenderer
     per := ((a.num.toFloat / total.toFloat) * 100f).toLocale("0.00")
     out.tr("style='background:#f8f8f8'")
       .td("style='$td'").b.w(a.name).bEnd.tdEnd
-      .td("style='$td; text-align:right'").w(a.num).tdEnd
+      .td("style='$td; text-align:right'").w(a.num.toLocale).tdEnd
       .td("style='$td; text-align:right'").w("$per%").tdEnd
       .trEnd
 
@@ -147,7 +158,7 @@ class UserAgentRenderer
       per = share.toLocale("0.00")
       out.tr("style='color:#999'")
         .td("style='$td; padding-left:2em'").w(v.ver).tdEnd
-        .td("style='$td; text-align:right'").w(v.num).tdEnd
+        .td("style='$td; text-align:right'").w(v.num.toLocale).tdEnd
         .td("style='$td; text-align:right'").w("$per%").tdEnd
         .trEnd
     }

@@ -6,6 +6,9 @@
 //   8 Oct 2012  Andy Frank  Creation
 //
 
+// Some test data here (Apache 2):
+// http://code.google.com/p/browserscope/source/browse/trunk/test/user_agent_data.csv
+
 **
 ** UserAgent parses and models a browser's user-agent string.
 **
