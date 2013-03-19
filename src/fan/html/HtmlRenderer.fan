@@ -68,6 +68,28 @@ class HtmlRenderer
          h2 { margin:1em; border-bottom: 1px solid #ccc; }
          div.section { margin: 1em 1em 1em 2em; }
          div.section table { margin:1em 0; }
+
+         div.bar-plot {
+           height: 300px;
+           margin: 1em 0;
+           position: relative;
+         }
+         div.bar-plot table {
+           position: absolute;
+           width: 300px;
+           margin-top: 300px;
+           -webkit-transform: rotate(-90deg);
+              -moz-transform: rotate(-90deg);
+                   transform: rotate(-90deg);
+           -webkit-transform-origin: 0 0;
+              -moz-transform-origin: 0 0;
+                   transform-origin: 0 0;
+         }
+         div.bar-plot table  div { height: 20px; background: #4e8adb; }
+         div.bar-plot table div.alt { background: #3762b9; }
+         div.bar-plot table  td { white-space: nowrap; }
+         div.bar-plot table  td:first-child { text-align: right; }
+         div.bar-plot table  td:nth-child(2) { background: #f5f5f5; width: 100%; }
          ").styleEnd
       .headEnd
     wout.body
