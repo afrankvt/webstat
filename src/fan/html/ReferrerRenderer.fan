@@ -42,7 +42,6 @@ class ReferrerRenderer
     out.div("class='section'")
 
     out.h3.w("Top Referrers").h3End
-    refChart(out, most)
     refTable(out, most)
 
     out.h3.w("Recent Referrers").h3End
@@ -119,14 +118,6 @@ class ReferrerRenderer
 // Widgets
 //////////////////////////////////////////////////////////////////////////
 
-  private Void refChart(WebOutStream out, StatRef[] refs)
-  {
-    data := Obj:Int[:]
-    end  := refs.size.min(30)
-    refs.eachRange(0..<end) |req,i| { data[i+1] = req.count }
-    BarPlot(data).write(out)
-  }
-
   private Void refTable(WebOutStream out, StatRef[] refs)
   {
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
@@ -135,13 +126,18 @@ class ReferrerRenderer
       .tr
       .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd
       .td("style='$td background:#f8f8f8; text-align:right'").b.w("Referred").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; width:100px;'").tdEnd
       .td("style='$td background:#f8f8f8;'").b.w("Page").bEnd.tdEnd
       .trEnd
     refs.eachRange(0..<end) |req,i|
     {
+      p := (req.count.toFloat / refs.first.count.toFloat * 100f).toInt
       out.tr
         .td("style='$td'").w("${i+1}.").tdEnd
         .td("style='$td background:#f8f8f8; text-align:right'").w(req.count).tdEnd
+        .td("style='$td background:#f8f8f8;'")
+          .div("style='background:#ccc; height: 12px; width:${p}%;'").divEnd
+          .tdEnd
         .td("style='$td'").w(toHref(req.uri)).tdEnd
         .trEnd
     }

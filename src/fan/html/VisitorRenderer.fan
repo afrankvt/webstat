@@ -46,14 +46,13 @@ class VisitorRenderer
 
     out.h3.w("Page Views").h3End
     out.p.w("Total pageviews this month: $entries.size.toLocale").pEnd
-    BarPlot(pageViews).write(out)
+    writeBarPlot(out, pageViews)
 
     out.h3.w("Unique Visitors").h3End
     out.p.w("Total unique visitors this month: $totalUnique.toLocale").pEnd
-    BarPlot(uniques).write(out)
+    writeBarPlot(out, uniques)
 
     out.h3.w("Most Requested Pages").h3End
-    mostReqChart(out, mostReqs)
     mostReqTable(out, mostReqs)
 
     out.divEnd  // div.section
@@ -66,12 +65,12 @@ class VisitorRenderer
   private Obj:Int toPageViews()
   {
     m := Obj:Int[:] { ordered=true }
-    dates.numDays.times |i| { m[i+1] = 0 }
+    dates.numDays.times |i| { m[dates.start + Duration(i*1day.ticks)] = 0 }
     entries.each |entry|
     {
       v := Util.toDateTime(entry)?.date
       if (v == null) return
-      m[v.day] = m[v.day] + 1
+      m[v] = m[v] + 1
     }
     return m
   }
@@ -84,7 +83,7 @@ class VisitorRenderer
   {
     counted := Str:[Date:Bool][:]  // ipAddr:Date
     data    := Obj:Int[:] { ordered=true }
-    dates.numDays.times |i| { data[i+1] = 0 }
+    dates.numDays.times |i| { data[dates.start + Duration(i*1day.ticks)] = 0 }
 
     entries.each |entry|
     {
@@ -101,8 +100,8 @@ class VisitorRenderer
       if (byDate == null) counted[val] = byDate = Date:Bool[:]
       else if (byDate[date] == true) return
 
-      byDate[date] = true                  // mark counted
-      data[date.day] = data[date.day] + 1  // inc count
+      byDate[date] = true          // mark counted
+      data[date] = data[date] + 1  // inc count
     }
 
     totalUnique = counted.size   // set unique for this month
@@ -143,14 +142,6 @@ class VisitorRenderer
     return map.keys.map |k| {  StatReq { uri=k; count=map[k] }}
   }
 
-  private Void mostReqChart(WebOutStream out, StatReq[] reqs)
-  {
-    data := Obj:Int[:] { ordered=true }
-    end  := reqs.size.min(30)
-    reqs.eachRange(0..<end) |req,i| { data[i+1] = req.count }
-    BarPlot(data).write(out)
-  }
-
   private Void mostReqTable(WebOutStream out, StatReq[] reqs)
   {
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
@@ -159,17 +150,48 @@ class VisitorRenderer
       .tr
       .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd
       .td("style='$td background:#f8f8f8; text-align:right'").b.w("Reqs").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; width:100px;'").tdEnd
       .td("style='$td background:#f8f8f8;'").b.w("Page").bEnd.tdEnd
       .trEnd
     reqs.eachRange(0..<end) |req,i|
     {
+      p := (req.count.toFloat / reqs.first.count.toFloat * 100f).toInt
       out.tr
         .td("style='$td'").w("${i+1}.").tdEnd
         .td("style='$td background:#f8f8f8; text-align:right'").w(req.count.toLocale).tdEnd
+        .td("style='$td background:#f8f8f8;'")
+          .div("style='background:#ccc; height: 12px; width:${p}%;'").divEnd
+          .tdEnd
         .td("style='$td'").w(req.uri.toXml).tdEnd
         .trEnd
     }
     out.tableEnd
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// Util
+//////////////////////////////////////////////////////////////////////////
+
+  private Void writeBarPlot(WebOutStream out, Date:Int map)
+  {
+    max := map.vals.max.toFloat
+    max += (max * 0.1f)
+
+    out.div("class='bar-plot'")
+    out.table
+    map.each |v,k|
+    {
+      p := (v.toFloat / max * 100f).toInt
+      w := k.weekday
+      c := w == Weekday.sun ? "class='alt'" : ""
+      out.tr
+        .td.esc(k.toLocale("WWW M-DD")).tdEnd
+        .td.div("$c style='width:${p}%'").divEnd.tdEnd
+        .td.w(v.toLocale).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+    out.divEnd   // div.bar-plot
   }
 
 //////////////////////////////////////////////////////////////////////////
