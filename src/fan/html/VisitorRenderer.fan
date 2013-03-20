@@ -145,7 +145,7 @@ class VisitorRenderer
   private Void mostReqTable(WebOutStream out, StatReq[] reqs)
   {
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
-    end := reqs.size.min(30)
+    end := reqs.size.min(40)
     out.table("style='margin:1em 0; border-spacing: 0px; border-collapse: collapse;'")
       .tr
       .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd

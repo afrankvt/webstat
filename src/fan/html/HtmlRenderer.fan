@@ -42,30 +42,28 @@ class HtmlRenderer
     wout := WebOutStream(out)
     prev := (dates.start - 1day).firstOfMonth.toLocale("YYYY-MM")
     next := (dates.end + 1day).firstOfMonth.toLocale("YYYY-MM")
+    prevDis := Date.fromStr("$prev-01").toLocale("MMM-YYYY")
+    nextDis := Date.fromStr("$next-01").toLocale("MMM-YYYY")
 
     wout.w("<!doctype html>").nl
     wout.html
     wout.head
-      .title.w("$domain.toXml &ndash; $dates").titleEnd
+      .title.w("$domain.toXml &ndash; $dates.dis").titleEnd
       .style.w(
         "body { font: 10pt Helvetica Neue, Arial, sans-serif; padding: 0; margin: 0; }
 
          div.header {
-           position: fixed;
-           top: 0; width: 100%;
-           padding: 1em;
-           background: #fff;
-           border-bottom: 1px solid #999;
-           box-shadow: #ccc 0px 3px 6px;
-           z-index:100;
+           background: #eee;
+           margin: 1em 1em 2em 1em;
+           padding: 0 1em 1em 1em;
+           border: 1px solid #ccc;
          }
-         div.header h1 { margin: 0 0 0.5em 0; }
+         div.header h1 { margin-bottom: 0; }
          div.header h1 + ul { float: right; padding-right: 1em; }
-         div.header ul { list-style: none; padding: 0; margin: 0; font-size: 120%; }
+         div.header ul { list-style: none; padding: 0; margin: 0; font-size: 110%; }
          div.header ul li { display: inline-block; padding: 0; margin: 0 1em 0 0; }
-         div.header + h2 { margin-top: 125px; }
 
-         h2 { margin:1em; border-bottom: 1px solid #ccc; }
+         h2 { margin: 1em; border-bottom: 1px solid #ccc; }
          div.section { margin: 1em 1em 1em 2em; }
          div.section table { margin:1em 0; }
 
@@ -73,6 +71,8 @@ class HtmlRenderer
            height: 300px;
            margin: 1em 0;
            position: relative;
+           border: 1px solid #ccc;
+           padding: 6px;
          }
          div.bar-plot table {
            position: absolute;
@@ -96,14 +96,15 @@ class HtmlRenderer
 
     wout
       .div("class='header'")
-      .h1.w("$domain.toXml &ndash; $dates").h1End
+      .h1.w("$domain.toXml &ndash; $dates.dis").h1End
       .ul
-        .li.a(`webStats-$domain-${prev}.html`).w("< $prev").aEnd.liEnd
-        .li.a(`webStats-$domain-${next}.html`).w("$next >").aEnd.liEnd
+        .li.a(`webStats-$domain-${prev}.html`).w("&#x2190; $prevDis").aEnd.liEnd
+        .li.a(`webStats-$domain-${next}.html`).w("$nextDis &#x2192;").aEnd.liEnd
         .ulEnd
       .ul
         .li.a(`#visitors`).w("Visitors").aEnd.liEnd
         .li.a(`#referrers`).w("Referrers").aEnd.liEnd
+        .li.a(`#search`).w("Search").aEnd.liEnd
         .li.a(`#userAgents`).w("User-Agents").aEnd.liEnd
         .ulEnd
       .divEnd // div.header
