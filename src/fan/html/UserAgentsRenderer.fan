@@ -35,7 +35,7 @@ class UserAgentRenderer
     out.div("class='section'")
 
     out.h3.w("Browser Usage").h3End
-    BarPlot(toBrowserData).write(out)
+    browserChart(out)
     browserTable(out)
 
     out.divEnd  // div.section
@@ -118,9 +118,9 @@ class UserAgentRenderer
 // Browsers
 //////////////////////////////////////////////////////////////////////////
 
-  private Obj:Int toBrowserData()
+  private Str:Int toBrowserData()
   {
-    data := Obj:Int[:] { ordered=true }
+    data := Str:Int[:] { ordered=true }
     sorted := sets.vals.sortr |a,b| { a.num <=> b.num }
     sorted.each |v| { data[v.name] = v.num }
     return data
@@ -162,6 +162,27 @@ class UserAgentRenderer
         .td("style='$td; text-align:right'").w("$per%").tdEnd
         .trEnd
     }
+  }
+
+  private Void browserChart(WebOutStream out)
+  {
+    map := toBrowserData
+    max := map.vals.max.toFloat
+    max += (max * 0.1f)
+
+    out.div("class='bar-plot'")
+    out.table
+    map.each |v,k|
+    {
+      p := (v.toFloat / max * 100f).toInt
+      out.tr
+        .td.esc(k).tdEnd
+        .td.div("style='width:${p}%'").divEnd.tdEnd
+        .td.w(v.toLocale).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+    out.divEnd   // div.bar-plot
   }
 
 //////////////////////////////////////////////////////////////////////////

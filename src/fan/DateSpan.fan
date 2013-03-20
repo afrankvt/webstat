@@ -41,4 +41,18 @@ const class DateSpan
 
   ** String representation.
   override Str toStr() { "${start}..${end}" }
+
+  ** Get display name for this span.
+  Str dis()
+  {
+    if (start.year == end.year)
+    {
+      if (start.month == end.month)
+      {
+        if (start.day == 1 && end.day == end.month.numDays(end.year))
+          return start.toLocale("MMM-YYYY")
+      }
+    }
+    return start.toLocale("D-MMM-YYYY") + "&ndash;" + end.toLocale("D-MMM-YYYY")
+  }
 }
