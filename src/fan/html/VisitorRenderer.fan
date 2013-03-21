@@ -41,15 +41,19 @@ class VisitorRenderer
     reqs      := toReqs
     mostReqs  := reqs.sortr |a,b| { a.count <=> b.count }
 
+    numDays  := dates.end > Date.today ? Date.today.day : dates.end.lastOfMonth.day
+    avgViews := (entries.size.toFloat / numDays.toFloat).round.toInt
+    avgUnique := (totalUnique.toFloat / numDays.toFloat).round.toInt
+
     out.h2("id='visitors'").w("Visitors").h2End
     out.div("class='section'")
 
     out.h3.w("Page Views").h3End
-    out.p.w("Total pageviews this month: $entries.size.toLocale").pEnd
+    out.p.w("Total pageviews this month: $entries.size.toLocale &ndash; Average: $avgViews.toLocale/day").pEnd
     writeBarPlot(out, pageViews)
 
     out.h3.w("Unique Visitors").h3End
-    out.p.w("Total unique visitors this month: $totalUnique.toLocale").pEnd
+    out.p.w("Total unique visitors this month: $totalUnique.toLocale &ndash; Average: $avgUnique.toLocale/day").pEnd
     writeBarPlot(out, uniques)
 
     out.h3.w("Most Requested Pages").h3End
