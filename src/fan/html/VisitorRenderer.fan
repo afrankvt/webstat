@@ -36,7 +36,24 @@ class VisitorRenderer
   ** Write content.
   Void write(WebOutStream out)
   {
-    pageViews := toPageViews
+    pageViewsByDate := Date:Int[:] { ordered=true }
+    pageViewsByTime := Time:Int[:] { ordered=true }
+
+    dates.numDays.times |i| { pageViewsByDate[dates.start + Duration(i*1day.ticks)] = 0 }
+    24.times |t| { pageViewsByTime[Time(t,0,0)] = 0 }
+
+    entries.each |entry|
+    {
+      ts := Util.toDateTime(entry)
+      if (ts == null) return
+
+      dkey := ts.date
+      pageViewsByDate[dkey] = pageViewsByDate[dkey] + 1
+
+      tkey := Time(ts.time.hour,0,0)
+      pageViewsByTime[tkey] = pageViewsByTime[tkey] + 1
+    }
+
     uniques   := toUniques
     reqs      := toReqs
     mostReqs  := reqs.sortr |a,b| { a.count <=> b.count }
@@ -50,33 +67,17 @@ class VisitorRenderer
 
     out.h3.w("Page Views").h3End
     out.p.w("Total pageviews this month: $entries.size.toLocale &ndash; Average: $avgViews.toLocale/day").pEnd
-    writeBarPlot(out, pageViews)
+    Util.writeBarPlot(out, pageViewsByDate)
+    Util.writeBarPlot(out, pageViewsByTime)
 
     out.h3.w("Unique Visitors").h3End
     out.p.w("Total unique visitors this month: $totalUnique.toLocale &ndash; Average: $avgUnique.toLocale/day").pEnd
-    writeBarPlot(out, uniques)
+    Util.writeBarPlot(out, uniques)
 
     out.h3.w("Most Requested Pages").h3End
     mostReqTable(out, mostReqs)
 
     out.divEnd  // div.section
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Page Views
-//////////////////////////////////////////////////////////////////////////
-
-  private Obj:Int toPageViews()
-  {
-    m := Obj:Int[:] { ordered=true }
-    dates.numDays.times |i| { m[dates.start + Duration(i*1day.ticks)] = 0 }
-    entries.each |entry|
-    {
-      v := Util.toDateTime(entry)?.date
-      if (v == null) return
-      m[v] = m[v] + 1
-    }
-    return m
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -170,32 +171,6 @@ class VisitorRenderer
         .trEnd
     }
     out.tableEnd
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Util
-//////////////////////////////////////////////////////////////////////////
-
-  private Void writeBarPlot(WebOutStream out, Date:Int map)
-  {
-    max := map.vals.max.toFloat
-    max += (max * 0.1f)
-
-    out.div("class='bar-plot'")
-    out.table
-    map.each |v,k|
-    {
-      p := (v.toFloat / max * 100f).toInt
-      w := k.weekday
-      c := w == Weekday.sun ? "class='alt'" : ""
-      out.tr
-        .td.esc(k.toLocale("WWW M-DD")).tdEnd
-        .td.div("$c style='width:${p}%'").divEnd.tdEnd
-        .td.w(v.toLocale).tdEnd
-        .trEnd
-    }
-    out.tableEnd
-    out.divEnd   // div.bar-plot
   }
 
 //////////////////////////////////////////////////////////////////////////

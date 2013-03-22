@@ -6,12 +6,19 @@
 //   14 Nov 2012  Andy Frank  Creation
 //
 
+using web
+
 **
 ** Util methods.
 **
 @Js
 const class Util
 {
+
+//////////////////////////////////////////////////////////////////////////
+// Time Utils
+//////////////////////////////////////////////////////////////////////////
+
   ** Attempt to convert LogEntry into DateTime instance using
   ** 'date' and 'time' entries.  If a DateTime cannot be created,
   ** returns null.
@@ -32,4 +39,44 @@ const class Util
   }
 
   static const TimeZone gmt := TimeZone("GMT")
+
+//////////////////////////////////////////////////////////////////////////
+// Render Utils
+//////////////////////////////////////////////////////////////////////////
+
+  ** Render a bar plot using given map.
+  static Void writeBarPlot(WebOutStream out, Obj:Int map)
+  {
+    max := map.vals.max.toFloat
+    max += (max * 0.1f)
+
+    out.div("class='bar-plot'")
+    out.table
+    map.each |v,k|
+    {
+      dis := k.toStr
+      per := (v.toFloat / max * 100f).toInt
+      cls := ""
+
+      if (k is Date)
+      {
+        date := (Date)k
+        dis = date.toLocale("WWW M-DD")
+        if (date.weekday == Weekday.sun) cls = "class='alt'"
+      }
+      else if (k is Time)
+      {
+        time := (Time)k
+        dis = time.toLocale("k:mm aa")
+      }
+
+      out.tr
+        .td.esc(dis).tdEnd
+        .td.div("$cls style='width:${per}%'").divEnd.tdEnd
+        .td.w(v.toLocale).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+    out.divEnd   // div.bar-plot
+  }
 }
