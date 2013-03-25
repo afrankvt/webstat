@@ -69,6 +69,11 @@ const class Util
         time := (Time)k
         dis = time.toLocale("k:mm aa")
       }
+      else if (k is Weekday)
+      {
+        w := (Weekday)k
+        dis = w.localeFull
+      }
 
       out.tr
         .td.esc(dis).tdEnd

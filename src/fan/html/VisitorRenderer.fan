@@ -38,9 +38,11 @@ class VisitorRenderer
   {
     pageViewsByDate := Date:Int[:] { ordered=true }
     pageViewsByTime := Time:Int[:] { ordered=true }
+    pageViewsByWeekday := Weekday:Int[:] { ordered=true }
 
     dates.numDays.times |i| { pageViewsByDate[dates.start + Duration(i*1day.ticks)] = 0 }
     24.times |t| { pageViewsByTime[Time(t,0,0)] = 0 }
+    Weekday.vals.each |w| { pageViewsByWeekday[w] = 0 }
 
     entries.each |entry|
     {
@@ -52,6 +54,9 @@ class VisitorRenderer
 
       tkey := Time(ts.time.hour,0,0)
       pageViewsByTime[tkey] = pageViewsByTime[tkey] + 1
+
+      wkey := ts.date.weekday
+      pageViewsByWeekday[wkey] = pageViewsByWeekday[wkey] + 1
     }
 
     uniques   := toUniques
@@ -69,6 +74,7 @@ class VisitorRenderer
     out.p.w("Total pageviews this month: $entries.size.toLocale &ndash; Average: $avgViews.toLocale/day").pEnd
     Util.writeBarPlot(out, pageViewsByDate)
     Util.writeBarPlot(out, pageViewsByTime)
+    Util.writeBarPlot(out, pageViewsByWeekday)
 
     out.h3.w("Unique Visitors").h3End
     out.p.w("Total unique visitors this month: $totalUnique.toLocale &ndash; Average: $avgUnique.toLocale/day").pEnd
