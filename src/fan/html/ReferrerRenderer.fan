@@ -222,6 +222,8 @@ class ReferrerRenderer
 
   private Void refTableSearchTerms(WebOutStream out)
   {
+    if (searchTerms.isEmpty) return
+
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
     out.table("style='margin:1em 0; border-spacing: 0px; border-collapse: collapse;'")
       .tr
