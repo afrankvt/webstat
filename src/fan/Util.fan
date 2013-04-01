@@ -35,10 +35,10 @@ const class Util
     time := Time.fromLocale(tstr, "hh:mm:ss", false)
     if (time == null) return null
 
-    return date.toDateTime(time, gmt).toTimeZone(tz)
+    return date.toDateTime(time, utc).toTimeZone(tz)
   }
 
-  static const TimeZone gmt := TimeZone("GMT")
+  static const TimeZone utc := TimeZone("UTC")
 
 //////////////////////////////////////////////////////////////////////////
 // Render Utils
