@@ -29,6 +29,10 @@ class VisitorRenderer
       if (stem.endsWith(".jpg")) return false
       if (stem.endsWith(".gif")) return false
       if (stem.endsWith(".js"))  return false
+
+      if (Util.toDateTime(e) == null) return false
+      if (!Util.isVisitor(e)) return false
+
       return true
     }
   }
@@ -39,6 +43,7 @@ class VisitorRenderer
     pageViewsByDate := Date:Int[:] { ordered=true }
     pageViewsByTime := Time:Int[:] { ordered=true }
     pageViewsByWeekday := Weekday:Int[:] { ordered=true }
+    pageViewTotal := 0
 
     dates.numDays.times |i| { pageViewsByDate[dates.start + Duration(i*1day.ticks)] = 0 }
     24.times |t| { pageViewsByTime[Time(t,0,0)] = 0 }
@@ -47,7 +52,7 @@ class VisitorRenderer
     entries.each |entry|
     {
       ts := Util.toDateTime(entry)
-      if (ts == null) return
+      pageViewTotal++
 
       dkey := ts.date
       pageViewsByDate[dkey] = pageViewsByDate[dkey] + 1
@@ -64,14 +69,14 @@ class VisitorRenderer
     mostReqs  := reqs.sortr |a,b| { a.count <=> b.count }
 
     numDays  := dates.end > Date.today ? Date.today.day : dates.end.lastOfMonth.day
-    avgViews := (entries.size.toFloat / numDays.toFloat).round.toInt
+    avgViews := (pageViewTotal.toFloat / numDays.toFloat).round.toInt
     avgUnique := (totalUnique.toFloat / numDays.toFloat).round.toInt
 
     out.h2("id='visitors'").w("Visitors").h2End
     out.div("class='section'")
 
     out.h3.w("Page Views").h3End
-    out.p.w("Total pageviews this month: $entries.size.toLocale &ndash; Average: $avgViews.toLocale/day").pEnd
+    out.p.w("Total pageviews this month: $pageViewTotal.toLocale &ndash; Average: $avgViews.toLocale/day").pEnd
     Util.writeBarPlot(out, pageViewsByDate)
     Util.writeBarPlot(out, pageViewsByTime)
     Util.writeBarPlot(out, pageViewsByWeekday)
@@ -102,11 +107,8 @@ class VisitorRenderer
       val := uniqueVal(entry)
       if (val == null) return
 
-      // check for valid date
-      date := Util.toDateTime(entry)?.date
-      if (date == null) return
-
       // verify this ip not counted yet
+      date := Util.toDateTime(entry).date
       byDate := counted[val]
       if (byDate == null) counted[val] = byDate = Date:Bool[:]
       else if (byDate[date] == true) return

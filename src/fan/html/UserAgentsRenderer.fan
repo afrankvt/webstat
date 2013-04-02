@@ -23,7 +23,7 @@ class UserAgentRenderer
   new make(HtmlRenderer r)
   {
     this.entries = r.entries
-    this.agents  = entries.findAll |e| { e.has("cs(User-Agent)") }
+    this.agents  = entries.findAll |e| { Util.isVisitor(e) }
   }
 
   ** Write content.
@@ -56,6 +56,8 @@ class UserAgentRenderer
     sets["IE"]      = StatAgentSet { name="IE" }
     sets["Mobile Safari"] = StatAgentSet { name="Mobile Safari" }
     sets["Other"]   = StatAgentSet { name="Other" }
+
+    debug := Str:Int[:]
 
     // sort agents by product and version
     agents.each |agent|
@@ -93,9 +95,28 @@ class UserAgentRenderer
         return false
       }
 
+      // check for "invalid" iOS
+      comment = ua.comments.find |c|
+      {
+        if (c == "iPhone") { count("Mobile Safari", "Unknown"); return true }
+        if (c == "iPad")   { count("Mobile Safari", "Unknown"); return true }
+        if (c == "iPod")   { count("Mobile Safari", "Unknown"); return true }
+        return false
+      }
+
       // other
-      if (product == null) count("Other", "")
+      if (product == null && comment == null)
+      {
+        key := agent["cs(User-Agent)"].val
+        debug[key] = (debug[key] ?: 0) + 1
+        count("Other", "")
+      }
     }
+
+    // echo("#### UNKNOWN USER-AGENTS ####")
+    // dkeys := debug.keys.sort |a,b| { debug[b] <=> debug[a] }
+    // dkeys.each |k| { echo(debug[k].toLocale.padl(6) + ": $k") }
+    // echo("### Total: " + (debug.vals.reduce(0) |Int r, Int v->Int| { r+v })->toLocale)
   }
 
   private Void count(Str name, Str ver)

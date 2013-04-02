@@ -16,8 +16,17 @@ const class Util
 {
 
 //////////////////////////////////////////////////////////////////////////
-// Time Utils
+// Entry Utils
 //////////////////////////////////////////////////////////////////////////
+
+  ** Return true if this is a valid visitor.
+  static Bool isVisitor(LogEntry entry)
+  {
+    ua := entry["cs(User-Agent)"]
+    if (ua == null) return false
+    if (ua.val.startsWith("Pingdom.com_bot")) return false
+    return true
+  }
 
   ** Attempt to convert LogEntry into DateTime instance using
   ** 'date' and 'time' entries.  If a DateTime cannot be created,
