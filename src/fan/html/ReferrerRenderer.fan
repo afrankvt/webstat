@@ -253,7 +253,8 @@ class ReferrerRenderer
 
   private Str toHref(Str uri)
   {
-    "<a href='$uri.toXml' rel='noreferrer'>$uri.toXml</a>"
+    "<a href='$uri.toXml' style='display:inline-block; max-width:800px;" +
+     " overflow:hidden; text-overflow:ellipsis;' rel='noreferrer'>$uri.toXml</a>"
   }
 
   private Str niceDate(DateTime ts)
