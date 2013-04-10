@@ -29,6 +29,8 @@ class VisitorRenderer
       if (stem.endsWith(".jpg")) return false
       if (stem.endsWith(".gif")) return false
       if (stem.endsWith(".js"))  return false
+      if (stem.endsWith(".ico")) return false
+      if (stem == "/robots.txt") return false
 
       if (Util.toDateTime(e) == null) return false
       if (!Util.isVisitor(e)) return false
