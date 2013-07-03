@@ -19,16 +19,26 @@ class ReferrerRenderer
   {
     this.entries = r.entries
 
+    baseDomain := ""
+    wwwDomain  := ""
+
     if (r.domain.startsWith("www."))
     {
-      this.self  = "http://" + r.domain["www.".size..-1]
-      this.selfw = "http://$r.domain"
+      baseDomain = r.domain["www.".size..-1]
+      wwwDomain  = r.domain
     }
     else
     {
-      this.self  = "http://$r.domain"
-      this.selfw = "http://www.$r.domain"
+      baseDomain = r.domain
+      wwwDomain  = "www.$r.domain"
     }
+
+    this.self = [
+      "http://$baseDomain",
+      "https://$baseDomain",
+      "http://$wwwDomain",
+      "https://$wwwDomain"
+    ]
   }
 
   ** Write content.
@@ -100,8 +110,7 @@ class ReferrerRenderer
   {
     ref := e["cs(Referer)"]
     if (ref == null) return false
-    if (ref.val.startsWith(self)) return false
-    if (ref.val.startsWith(selfw)) return false
+    if (self.any |s| { ref.val.startsWith(s) }) return false
 
     uri := ref.val
     http  := uri.startsWith("http://")
@@ -283,8 +292,7 @@ class ReferrerRenderer
 //////////////////////////////////////////////////////////////////////////
 
   private const LogEntry[] entries
-  private const Str self               // this domain w/o www prefix
-  private const Str selfw              // this domain w/ www prefix
+  private const Str[] self             // all self domains (http/https/www./etc)
   private Str:Int search      := [:]   // search provider map
   private Str:Int searchTerms := [:]   // search terms map
 }
