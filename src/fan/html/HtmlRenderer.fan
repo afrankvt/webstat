@@ -105,6 +105,7 @@ class HtmlRenderer
         .li.a(`#visitors`).w("Visitors").aEnd.liEnd
         .li.a(`#referrers`).w("Referrers").aEnd.liEnd
         .li.a(`#search`).w("Search").aEnd.liEnd
+        .li.a(`#social`).w("Social").aEnd.liEnd
         .li.a(`#userAgents`).w("User-Agents").aEnd.liEnd
         .ulEnd
       .divEnd // div.header

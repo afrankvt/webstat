@@ -69,6 +69,14 @@ class ReferrerRenderer
       refTableSearchTerms(out)
 
     out.divEnd  // div.section
+
+  out.h2("id='social'").w("Social").h2End
+    out.div("class='section'")
+
+      out.h3.w("Social Networks").h3End
+      refTableSocial(out)
+
+    out.divEnd  // div.section
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -126,12 +134,19 @@ class ReferrerRenderer
     // find provider
     host := uri[(http ? 7 : 8)..<off].split('.')
     if (host.size < 2) return true
+    fullhost := host.join(".")
 
     // white-list providers
     if (host.contains("google")) { addTerm("google", "q", uri); return false }
     if (host.contains("bing"))   { addTerm("bing",   "q", uri); return false }
     if (host.contains("yahoo"))  { addTerm("yahoo",  "p", uri); return false }
+    if (host.contains("aol"))    { addTerm("aol",    "q", uri); return false }
     if (host.contains("yandex")) { addTerm("yandex", "text", uri); return false }
+
+    // social networks
+    if (fullhost == "t.co")        { addSocial("twitter",  uri); return false }
+    if (fullhost == "fb.me")       { addSocial("facebook", uri); return false }
+    if (host.contains("facebook")) { addSocial("facebook", uri); return false }
 
     // otherwise normal referrer
     return true
@@ -146,6 +161,18 @@ class ReferrerRenderer
     v := Uri.fromStr(uri).query[q]
     if (v == "") return
     if (v != null) searchTerms[v] = (searchTerms[v] ?: 0) + 1
+  }
+
+  private Void addSocial(Str network, Str uri)
+  {
+    // update network
+    social[network] = (social[network] ?: 0) + 1
+
+    // TODO: rank referrer URIs?
+    // // update terms
+    // v := Uri.fromStr(uri).query[q]
+    // if (v == "") return
+    // if (v != null) searchTerms[v] = (searchTerms[v] ?: 0) + 1
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -260,6 +287,37 @@ class ReferrerRenderer
     out.tableEnd
   }
 
+  private Void refTableSocial(WebOutStream out)
+  {
+    td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
+    out.table("style='margin:1em 0; border-spacing: 0px; border-collapse: collapse;'")
+      .tr
+      .td("style='$td background:#f8f8f8;'").b.w("Rank").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; text-align:right'").b.w("%").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; text-align:right'").b.w("Count").bEnd.tdEnd
+      .td("style='$td background:#f8f8f8; width:100px;'").tdEnd
+      .td("style='$td background:#f8f8f8;'").b.w("Social Network").bEnd.tdEnd
+      .trEnd
+
+    sum  := ((Int)social.vals.reduce(0) |Int r, Int v->Int| { r + v }).toFloat
+    keys := social.keys.sortr |a,b| { social[a] <=> social[b] }
+    keys.each |key,i|
+    {
+      v := social[key]
+      p := (v.toFloat / sum * 100f)
+      out.tr
+        .td("style='$td'").w("${i+1}.").tdEnd
+        .td("style='$td background:#f8f8f8; text-align:right'").w(p.toLocale("0.00")).w("%").tdEnd
+        .td("style='$td background:#f8f8f8; text-align:right'").w(v.toLocale).tdEnd
+        .td("style='$td background:#f8f8f8;'")
+          .div("style='background:#ccc; height: 12px; width:${p.toInt}%;'").divEnd
+          .tdEnd
+        .td("style='$td'").w(key.toDisplayName).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+  }
+
   private Str toHref(Str uri)
   {
     "<a href='$uri.toXml' style='display:inline-block; max-width:800px;" +
@@ -295,6 +353,7 @@ class ReferrerRenderer
   private const Str[] self             // all self domains (http/https/www./etc)
   private Str:Int search      := [:]   // search provider map
   private Str:Int searchTerms := [:]   // search terms map
+  private Str:Int social      := [:]   // social network map
 }
 
 **************************************************************************
