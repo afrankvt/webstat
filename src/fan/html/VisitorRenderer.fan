@@ -69,10 +69,12 @@ class VisitorRenderer
     uniques   := toUniques
     reqs      := toReqs
     mostReqs  := reqs.sortr |a,b| { a.count <=> b.count }
+    Int totalVisitors := uniques.reduce(0) |Int x, Int r->Int| { x + r }
 
     numDays  := dates.end > Date.today ? Date.today.day : dates.end.lastOfMonth.day
     avgViews := (pageViewTotal.toFloat / numDays.toFloat).round.toInt
-    avgUnique := (totalUnique.toFloat / numDays.toFloat).round.toInt
+    avgUnique   := (totalUnique.toFloat / numDays.toFloat).round.toInt
+    avgVisitors := (totalVisitors.toFloat / numDays.toFloat).round.toInt
 
     out.h2("id='visitors'").w("Visitors").h2End
     out.div("class='section'")
@@ -83,7 +85,8 @@ class VisitorRenderer
     Util.writeBarPlot(out, pageViewsByTime)
     Util.writeBarPlot(out, pageViewsByWeekday)
 
-    out.h3.w("Unique Visitors").h3End
+    out.h3.w("Visitors").h3End
+    out.p.w("Total visitors this month: $totalVisitors.toLocale &ndash; Average: $avgVisitors.toLocale/day").pEnd
     out.p.w("Total unique visitors this month: $totalUnique.toLocale &ndash; Average: $avgUnique.toLocale/day").pEnd
     Util.writeBarPlot(out, uniques)
 
