@@ -19,6 +19,26 @@ const class Util
 // Entry Utils
 //////////////////////////////////////////////////////////////////////////
 
+  ** Return true if this is a page entry.
+  static Bool isPage(LogEntry entry)
+  {
+    if (entry.ts == null) return false
+
+    stem := entry["cs-uri-stem"]?.val
+    if (stem == null) return false
+
+    if (stem.endsWith(".css")) return false
+    if (stem.endsWith(".png")) return false
+    if (stem.endsWith(".jpg")) return false
+    if (stem.endsWith(".gif")) return false
+    if (stem.endsWith(".js"))  return false
+    if (stem.endsWith(".ico")) return false
+    if (stem == "/robots.txt") return false
+
+    if (!Util.isVisitor(entry)) return false
+    return true
+  }
+
   ** Return true if this is a valid visitor.
   static Bool isVisitor(LogEntry entry)
   {
@@ -52,6 +72,34 @@ const class Util
 //////////////////////////////////////////////////////////////////////////
 // Render Utils
 //////////////////////////////////////////////////////////////////////////
+
+  ** Render a rank table.
+  static Void writeRankTable(WebOutStream out, Str col, Obj:Int map)
+  {
+    // sort and trim keys
+    keys := map.keys.sortr |a,b| { map[a] <=> map[b] }
+    size := keys.size.min(40)
+
+    out.table("class='rank'")
+      .tr
+      .td.w("Rank").tdEnd
+      .td.esc(col).tdEnd
+      .td.tdEnd
+      .td.w("Page").tdEnd
+      .trEnd
+    keys.eachRange(0..<size) |key,i|
+    {
+      v := map[key]
+      p := (v.toFloat / map[keys.first].toFloat * 100f).toInt
+      out.tr
+        .td.w("${i+1}.").tdEnd
+        .td.w(v.toLocale).tdEnd
+        .td.div("style='width:${p}%;'").divEnd.tdEnd
+        .td.esc(key).tdEnd
+        .trEnd
+    }
+    out.tableEnd
+  }
 
   ** Render a bar plot using given map.
   static Void writeBarPlot(WebOutStream out, Obj:Int map)

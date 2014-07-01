@@ -4,6 +4,7 @@
 //
 // History:
 //   12 Nov 2012  Andy Frank  Creation
+//   30 Jun 2014  Andy Frank  Refactor to stream design
 //
 
 using web
@@ -14,150 +15,65 @@ using web
 @Js
 class UserAgentRenderer
 {
-
-//////////////////////////////////////////////////////////////////////////
-// Construction
-//////////////////////////////////////////////////////////////////////////
-
-  ** Construct new UserAgentRenderer for HtmlRenderer.
-  new make(HtmlRenderer r)
+  ** Construct new PageRenderer for HtmlRenderer.
+  new make(UserAgentProc p)
   {
-    this.entries = r.entries
-    this.agents  = entries.findAll |e| { Util.isVisitor(e) }
+    this.p = p
   }
 
   ** Write content.
   Void write(WebOutStream out)
   {
-    analyzeUserAgents
-
     out.h2("id='userAgents'").w("User-Agents").h2End
-    out.div("class='section'")
-
-    out.h3.w("Browser Usage").h3End
-    browserChart(out)
-    browserTable(out)
-
-    out.divEnd  // div.section
+      .div("class='section'")
+      .h3.w("Browser Usage").h3End
+      browserChart(out)
+      browserTable(out)
+      .divEnd
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Analyze
-//////////////////////////////////////////////////////////////////////////
-
-  private Void analyzeUserAgents()
+  private WebOutStream browserChart(WebOutStream out)
   {
-    sets = Str:StatAgentSet[:]
-    sets["Firefox"] = StatAgentSet { name="Firefox" }
-    sets["Android"] = StatAgentSet { name="Android" }
-    sets["Chrome"]  = StatAgentSet { name="Chrome" }
-    sets["Safari"]  = StatAgentSet { name="Safari" }
-    sets["Opera"]   = StatAgentSet { name="Opera" }
-    sets["IE"]      = StatAgentSet { name="IE" }
-    sets["Mobile Safari"] = StatAgentSet { name="Mobile Safari" }
-    sets["Other"]   = StatAgentSet { name="Other" }
+    map := toBrowserData
+    max := map.vals.max.toFloat
+    max += (max * 0.1f)
 
-    debug := Str:Int[:]
-
-    // sort agents by product and version
-    agents.each |agent|
+    out.div("class='bar-plot'")
+    out.table
+    map.each |v,k|
     {
-      ua := UserAgent(agent["cs(User-Agent)"].val)
-
-      // check comments
-      comment := ua.comments.find |c|
-      {
-        if (c.startsWith("Android ")) { count("Android", c["Android ".size..-1]); return true }
-        if (c.startsWith("MSIE "))    { count("IE", c["MSIE ".size..-1]); return true }
-        return false
-      }
-
-      // bail if comment matched
-      if (comment != null) return
-
-      // check products
-      product := ua.products.find |p|
-      {
-        if (p.name == "Firefox") { count("Firefox", p.ver); return true }
-        if (p.name == "Chrome")  { count("Chrome",  p.ver); return true }
-        if (p.name == "Safari")
-        {
-          v := ua.products.find |v| { v.name == "Version" }
-          m := ua.products.find |m| { m.name == "Mobile" }
-          if (v != null)
-          {
-            if (m != null) count("Mobile Safari", v.ver)
-            else count("Safari", v.ver)
-          }
-          return true
-        }
-        if (p.name == "Opera")   { count("Opera", p.ver);  return true }
-        return false
-      }
-
-      // check for "invalid" iOS
-      comment = ua.comments.find |c|
-      {
-        if (c == "iPhone") { count("Mobile Safari", "Unknown"); return true }
-        if (c == "iPad")   { count("Mobile Safari", "Unknown"); return true }
-        if (c == "iPod")   { count("Mobile Safari", "Unknown"); return true }
-        return false
-      }
-
-      // other
-      if (product == null && comment == null)
-      {
-        key := agent["cs(User-Agent)"].val
-        debug[key] = (debug[key] ?: 0) + 1
-        count("Other", "")
-      }
+      p := (v.toFloat / max * 100f).toInt
+      out.tr
+        .td.esc(k).tdEnd
+        .td.div("style='width:${p}%'").divEnd.tdEnd
+        .td.w(v.toLocale).tdEnd
+        .trEnd
     }
-
-    // echo("#### UNKNOWN USER-AGENTS ####")
-    // dkeys := debug.keys.sort |a,b| { debug[b] <=> debug[a] }
-    // dkeys.each |k| { echo(debug[k].toLocale.padl(6) + ": $k") }
-    // echo("### Total: " + (debug.vals.reduce(0) |Int r, Int v->Int| { r+v })->toLocale)
+    out.tableEnd
+    out.divEnd   // div.bar-plot
+    return out
   }
-
-  private Void count(Str name, Str ver)
-  {
-    // set count
-    a := sets[name]
-    a.num++
-
-    // ver count
-    v := a.ver[ver]
-    if (v == null)
-    {
-      v = StatAgent { it.name=name; it.ver=ver }
-      a.ver[ver] = v
-    }
-    v.num++
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Browsers
-//////////////////////////////////////////////////////////////////////////
 
   private Str:Int toBrowserData()
   {
     data := Str:Int[:] { ordered=true }
-    sorted := sets.vals.sortr |a,b| { a.num <=> b.num }
+    sorted := p.sets.vals.sortr |a,b| { a.num <=> b.num }
     sorted.each |v| { data[v.name] = v.num }
     return data
   }
 
-  private Void browserTable(WebOutStream out)
+  private WebOutStream browserTable(WebOutStream out)
   {
     // sort by usage and list
-    sorted := sets.vals.sortr |a,b| { a.num <=> b.num }
+    sorted := p.sets.vals.sortr |a,b| { a.num <=> b.num }
     total  := sorted.reduce(0) |Int r,v| { r + v.num }
     out.table("style='border-spacing: 0px; border-collapse: collapse;'")
     sorted.each |a| { row(out, a, total) }
     out.tableEnd
+    return out
   }
 
-  private Void row(WebOutStream out, StatAgentSet a, Int total)
+  private Void row(WebOutStream out, UserAgentSet a, Int total)
   {
     td := "padding: 2px 6px; border:1px solid #ccc;"
 
@@ -185,49 +101,5 @@ class UserAgentRenderer
     }
   }
 
-  private Void browserChart(WebOutStream out)
-  {
-    map := toBrowserData
-    max := map.vals.max.toFloat
-    max += (max * 0.1f)
-
-    out.div("class='bar-plot'")
-    out.table
-    map.each |v,k|
-    {
-      p := (v.toFloat / max * 100f).toInt
-      out.tr
-        .td.esc(k).tdEnd
-        .td.div("style='width:${p}%'").divEnd.tdEnd
-        .td.w(v.toLocale).tdEnd
-        .trEnd
-    }
-    out.tableEnd
-    out.divEnd   // div.bar-plot
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
-
-  private LogEntry[] entries
-  private LogEntry[] agents
-  private Str:StatAgentSet sets := [:]
-
-}
-
-@Js
-internal class StatAgentSet
-{
-  Str name := ""
-  Int num  := 0
-  Str:StatAgent ver := Str:StatAgent[:]
-}
-
-@Js
-internal class StatAgent
-{
-  Str name := ""
-  Str ver  := ""
-  Int num  := 0
+  private UserAgentProc p
 }
