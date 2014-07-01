@@ -20,6 +20,6 @@ class Build : BuildPod
     summary = "W3C Extended Log Analyzer"
     version = Version("1.0")
     depends = ["sys 1.0", "util 1.0", "concurrent 1.0", "web 1.0"]
-    srcDirs = [`fan/`, `fan/html/`]
+    srcDirs = [`fan/`, `fan/html/`, `fan/proc/`]
   }
 }

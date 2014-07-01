@@ -3,7 +3,8 @@
 // Licensed under the MIT License
 //
 // History:
-//   8 Oct 2012  Andy Frank  Creation
+//    8 Oct 2012  Andy Frank  Creation
+//   27 Jun 2014  Andy Frank  Refactor to stream design
 //
 
 **
@@ -13,41 +14,31 @@
 @Js
 class LogReader
 {
-  **
-  ** Read the log file from input stream.
-  **
-  LogEntry[] read(InStream in)
-  {
-    this.in = in
-    this.acc = LogEntry[,]
-    readLine
-    while (line != null) readLine
-    return acc
-  }
+  ** Construct new LogReader for given log input stream.
+  new make(InStream in) { this.in = in }
 
-//////////////////////////////////////////////////////////////////////////
-// Parse
-//////////////////////////////////////////////////////////////////////////
-
-  ** Read next line.
-  private Void readLine()
+  ** Iterate over the log file and call func for each log entry.
+  Void each(|LogEntry| func)
   {
-    try
+    lineNum := 0
+    while ((line = in.readLine) != null)
     {
       lineNum++
-      line = in.readLine
-      if (line == null) return
-      if (line.startsWith("#")) parseDirective
-      else parseEntry
+      try
+      {
+        if (line.startsWith("#")) parseDirective
+        else func(parseEntry)
+      }
+      catch (Err err)
+      {
+        echo("[Line $lineNum] $line")
+        err.trace
+        throw err
+      }
     }
-    catch (Err err) { echo("$lineNum: $err.traceToStr") }
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Directives
-//////////////////////////////////////////////////////////////////////////
-
-  ** Parse directive.
+  ** Parse directive line.
   private Void parseDirective()
   {
     off  := line.index(" ")
@@ -55,21 +46,12 @@ class LogReader
 
     name := line[0..<off]
     val  := line[off+1..-1]
-    if (name.startsWith("#Fields")) parseFields(val)
+    if (name.startsWith("#Fields"))
+      fields = val.trim.split
   }
 
-  ** Parse field definitions.
-  private Void parseFields(Str val)
-  {
-    fields = val.trim.split
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Entries
-//////////////////////////////////////////////////////////////////////////
-
-  ** Parse an entry line.
-  private Void parseEntry()
+ ** Parse an entry line.
+  private LogEntry parseEntry()
   {
     if (fields == null) throw ParseErr("Fields not defined")
 
@@ -82,7 +64,8 @@ class LogReader
       if (v == "-") return
       temp.add(LogField { id=f; val=v })
     }
-    acc.add(LogEntry { it.fields=temp })
+
+    return LogEntry { it.orig=line; it.fields=temp }
   }
 
   ** Tokenize string using delimiting on whitespace.
@@ -131,15 +114,9 @@ class LogReader
     return tokens
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
-
-  private InStream? in      // input stream
-  private LogEntry[]? acc   // cur entries list
-  private Str[]? fields     // cur fields
+  private InStream in
   private Str? line         // cur line
-  private Int lineNum       // cur line num
+  private Str[]? fields     // cur fields
 }
 
 **************************************************************************
@@ -149,7 +126,14 @@ class LogReader
 const class LogEntry
 {
   ** Constructor
-  new make(|This|? b) { if (b != null) b(this) }
+  new make(|This|? b)
+  {
+    if (b != null) b(this)
+    this.ts = Util.toDateTime(this)
+  }
+
+  ** Parsed timestamp if available.
+  const DateTime? ts := null
 
   ** Return true if entry contains field id.
   Bool has(Str id)
@@ -164,6 +148,9 @@ const class LogEntry
   {
     fields.find |f| { f.id == id }
   }
+
+  ** Original log line.
+  const Str orig := ""
 
   ** The fields for this entry.
   const LogField[] fields := LogField[,]

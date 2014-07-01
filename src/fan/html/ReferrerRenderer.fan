@@ -4,6 +4,7 @@
 //
 // History:
 //   12 Nov 2012  Andy Frank  Creation
+//   30 Jun 2014  Andy Frank  Refactor to stream design
 //
 
 using web
@@ -14,172 +15,44 @@ using web
 @Js
 class ReferrerRenderer
 {
-  ** Construct new RefererRenderer for HtmlRenderer.
-  new make(HtmlRenderer r)
+  ** Construct new RequestRenderer for HtmlRenderer.
+  new make(ReferrerProc p)
   {
-    this.entries = r.entries
-
-    baseDomain := ""
-    wwwDomain  := ""
-
-    if (r.domain.startsWith("www."))
-    {
-      baseDomain = r.domain["www.".size..-1]
-      wwwDomain  = r.domain
-    }
-    else
-    {
-      baseDomain = r.domain
-      wwwDomain  = "www.$r.domain"
-    }
-
-    this.self = [
-      "http://$baseDomain",
-      "https://$baseDomain",
-      "http://$wwwDomain",
-      "https://$wwwDomain"
-    ]
+    this.p = p
   }
 
   ** Write content.
   Void write(WebOutStream out)
   {
-    refs   := findRefs
-    most   := refs.dup.sortr |a,b| { a.count <=> b.count }
-    recent := refs.dup.sortr |a,b| { a.last <=> b.last }
+    stats  := p.stats
+    most   := stats.dup.sortr |a,b| { a.count <=> b.count }
+    recent := stats.dup.sortr |a,b| { a.last <=> b.last }
+
+    sstats  := p.socialStats
+    smost   := sstats.dup.sortr |a,b| { a.count <=> b.count }
+    srecent := sstats.dup.sortr |a,b| { a.last <=> b.last }
 
     out.h2("id='referrers'").w("Referrers").h2End
     out.div("class='section'")
-
-      out.h3.w("Top Referrers").h3End
-      refTable(out, most)
-
-      out.h3.w("Recent Referrers").h3End
-      refTableRecent(out, recent)
-
-    out.divEnd  // div.section
+      out.h3.w("Top Referrers").h3End;    refTable(out, most)
+      out.h3.w("Recent Referrers").h3End; refTableRecent(out, recent)
+      out.divEnd
 
     out.h2("id='search'").w("Search").h2End
     out.div("class='section'")
+      out.h3.w("Search Providers").h3End; refTableSearch(out)
+      out.h3.w("Search Terms").h3End;     refTableSearchTerms(out)
+      out.divEnd
 
-      out.h3.w("Search Providers").h3End
-      refTableSearch(out)
-
-      out.h3.w("Search Terms").h3End
-      refTableSearchTerms(out)
-
-    out.divEnd  // div.section
-
-  out.h2("id='social'").w("Social").h2End
+    out.h2("id='social'").w("Social").h2End
     out.div("class='section'")
-
-      out.h3.w("Social Networks").h3End
-      refTableSocial(out)
-
-    out.divEnd  // div.section
+      out.h3.w("Social Networks").h3End;         refTableSocial(out)
+      out.h3.w("Top Social Referrers").h3End;    refTable(out, smost)
+      out.h3.w("Recent Social Referrers").h3End; refTableRecent(out, srecent)
+      out.divEnd
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Analyze
-//////////////////////////////////////////////////////////////////////////
-
-  private StatRef[] findRefs()
-  {
-    map := Str:StatRef[:]
-    utc := TimeZone.utc
-    ny  := TimeZone("New_York")
-    entries.each |e|
-    {
-      if (!check(e)) return
-
-      uri  := e["cs(Referer)"].val
-      ref  := map[uri] ?: StatRef { it.uri=uri }
-      date := Util.toDateTime(e)?.date
-      time := Time.fromStr(e["time"].val, false)
-
-      DateTime? last
-      if (date != null && time != null)
-      {
-        last = DateTime(
-          date.year, date.month, date.day,
-          time.hour, time.min, time.sec, 0, utc).toTimeZone(ny)
-      }
-
-      ref.count++
-      ref.last = last ?: ref.last
-      map[uri] = ref
-    }
-    return map.vals
-  }
-
-  ** Return true if valid referrer, false if invalid or
-  ** if a search query and should be ignored.
-  private Bool check(LogEntry e)
-  {
-    ref := e["cs(Referer)"]
-    if (ref == null) return false
-    if (self.any |s| { ref.val.startsWith(s) }) return false
-
-    uri := ref.val
-    http  := uri.startsWith("http://")
-    https := !http && uri.startsWith("https://")
-
-    // skip but include if not proper uri
-    if (!http && !https) return true
-
-    // find host uri
-    off := uri.index("/", http ? 7: 8)
-    if (off == null) return true
-
-    // find provider
-    host := uri[(http ? 7 : 8)..<off].split('.')
-    if (host.size < 2) return true
-    fullhost := host.join(".")
-
-    // white-list providers
-    if (host.contains("google")) { addTerm("google", "q", uri); return false }
-    if (host.contains("bing"))   { addTerm("bing",   "q", uri); return false }
-    if (host.contains("yahoo"))  { addTerm("yahoo",  "p", uri); return false }
-    if (host.contains("aol"))    { addTerm("aol",    "q", uri); return false }
-    if (host.contains("yandex")) { addTerm("yandex", "text", uri); return false }
-
-    // social networks
-    if (fullhost == "t.co")        { addSocial("twitter",  uri); return false }
-    if (fullhost == "fb.me")       { addSocial("facebook", uri); return false }
-    if (host.contains("facebook")) { addSocial("facebook", uri); return false }
-
-    // otherwise normal referrer
-    return true
-  }
-
-  private Void addTerm(Str provider, Str q, Str uri)
-  {
-    // update provider
-    search[provider] = (search[provider] ?: 0) + 1
-
-    // update terms
-    v := Uri.fromStr(uri).query[q]
-    if (v == "") return
-    if (v != null) searchTerms[v] = (searchTerms[v] ?: 0) + 1
-  }
-
-  private Void addSocial(Str network, Str uri)
-  {
-    // update network
-    social[network] = (social[network] ?: 0) + 1
-
-    // TODO: rank referrer URIs?
-    // // update terms
-    // v := Uri.fromStr(uri).query[q]
-    // if (v == "") return
-    // if (v != null) searchTerms[v] = (searchTerms[v] ?: 0) + 1
-  }
-
-//////////////////////////////////////////////////////////////////////////
-// Widgets
-//////////////////////////////////////////////////////////////////////////
-
-  private Void refTable(WebOutStream out, StatRef[] refs)
+  private Void refTable(WebOutStream out, ReferrerStat[] refs)
   {
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
     end := refs.size.min(40)
@@ -205,7 +78,7 @@ class ReferrerRenderer
     out.tableEnd
   }
 
-  private Void refTableRecent(WebOutStream out, StatRef[] refs)
+  private Void refTableRecent(WebOutStream out, ReferrerStat[] refs)
   {
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
     end := refs.size.min(40)
@@ -237,11 +110,11 @@ class ReferrerRenderer
       .td("style='$td background:#f8f8f8;'").b.w("Provider").bEnd.tdEnd
       .trEnd
 
-    sum  := ((Int)search.vals.reduce(0) |Int r, Int v->Int| { r + v }).toFloat
-    keys := search.keys.sortr |a,b| { search[a] <=> search[b] }
+    sum  := ((Int)p.search.vals.reduce(0) |Int r, Int v->Int| { r + v }).toFloat
+    keys := p.search.keys.sortr |a,b| { p.search[a] <=> p.search[b] }
     keys.each |key,i|
     {
-      v := search[key]
+      v := p.search[key]
       p := (v.toFloat / sum * 100f)
       out.tr
         .td("style='$td'").w("${i+1}.").tdEnd
@@ -258,7 +131,7 @@ class ReferrerRenderer
 
   private Void refTableSearchTerms(WebOutStream out)
   {
-    if (searchTerms.isEmpty) return
+    if (p.searchTerms.isEmpty) return
 
     td  := "padding: 2px 6px; border:1px solid #ccc; white-space:nowrap;"
     out.table("style='margin:1em 0; border-spacing: 0px; border-collapse: collapse;'")
@@ -269,11 +142,11 @@ class ReferrerRenderer
       .td("style='$td background:#f8f8f8;'").b.w("Term").bEnd.tdEnd
       .trEnd
 
-    max  := searchTerms.vals.max.toFloat
-    keys := searchTerms.keys.sortr |a,b| { searchTerms[a] <=> searchTerms[b] }
+    max  := p.searchTerms.vals.max.toFloat
+    keys := p.searchTerms.keys.sortr |a,b| { p.searchTerms[a] <=> p.searchTerms[b] }
     keys.eachRange(0..<keys.size.min(40)) |key,i|
     {
-      v := searchTerms[key]
+      v := p.searchTerms[key]
       p := (v.toFloat / max * 100f)
       out.tr
         .td("style='$td'").w("${i+1}.").tdEnd
@@ -299,11 +172,11 @@ class ReferrerRenderer
       .td("style='$td background:#f8f8f8;'").b.w("Social Network").bEnd.tdEnd
       .trEnd
 
-    sum  := ((Int)social.vals.reduce(0) |Int r, Int v->Int| { r + v }).toFloat
-    keys := social.keys.sortr |a,b| { social[a] <=> social[b] }
+    sum  := ((Int)p.social.vals.reduce(0) |Int r, Int v->Int| { r + v }).toFloat
+    keys := p.social.keys.sortr |a,b| { p.social[a] <=> p.social[b] }
     keys.each |key,i|
     {
-      v := social[key]
+      v := p.social[key]
       p := (v.toFloat / sum * 100f)
       out.tr
         .td("style='$td'").w("${i+1}.").tdEnd
@@ -326,43 +199,28 @@ class ReferrerRenderer
 
   private Str niceDate(DateTime ts)
   {
-    // mins
-    diff := DateTime.now - ts
-    if (diff < 1min)  return "Just now"
-    if (diff < 2min)  return "1 min ago"
-    if (diff < 1hr)   return "$diff.toMin mins ago"
+    // TODO FIXIT: this only works when stats are generated in real-time...
 
-    // today
-    today := Date.today
-    if (ts.date == today)
-      return "Today " + ts.toLocale("k:mmaa")
+    // // mins
+    // diff := DateTime.now - ts
+    // if (diff < 1min)  return "Just now"
+    // if (diff < 2min)  return "1 min ago"
+    // if (diff < 1hr)   return "$diff.toMin mins ago"
+    //
+    // // today
+    // today := Date.today
+    // if (ts.date == today)
+    //   return "Today " + ts.toLocale("k:mmaa")
+    //
+    // // yesterday
+    // if (ts.date == (today-1day))
+    //   return "Yesterday " + ts.toLocale("k:mmaa")
+    //
+    // // date
+    // return ts.toLocale(ts.year == today.year ? "WWW D MMM" : "WWW D MMM YYYY")
 
-    // yesterday
-    if (ts.date == (today-1day))
-      return "Yesterday"
-
-    // date
-    return ts.toLocale(ts.year == today.year ? "WWW D MMM" : "WWW D MMM YYYY")
+    return ts.toLocale("WWW D MMM k:mmaa")
   }
 
-//////////////////////////////////////////////////////////////////////////
-// Fields
-//////////////////////////////////////////////////////////////////////////
-
-  private const LogEntry[] entries
-  private const Str[] self             // all self domains (http/https/www./etc)
-  private Str:Int search      := [:]   // search provider map
-  private Str:Int searchTerms := [:]   // search terms map
-  private Str:Int social      := [:]   // social network map
-}
-
-**************************************************************************
-** StateRef
-**************************************************************************
-@Js
-internal class StatRef
-{
-  Str uri   := ""
-  Int count := 0
-  DateTime last := DateTime.defVal
+  private ReferrerProc p
 }
