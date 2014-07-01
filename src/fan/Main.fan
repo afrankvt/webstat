@@ -17,8 +17,8 @@ class Main : AbstractMain
   @Arg { help="W3C extended log file format log file to analyze" }
   File? logFile
 
-  @Opt { help="Month to process (defaults to this month)" }
-  Str month := Date.today.toLocale("YYYY-MM")
+  @Opt { help="Month to process (defaults to current month)" }
+  Str? month
 
   @Opt { help="Domain name of website" }
   Str domain := ""
@@ -37,7 +37,8 @@ class Main : AbstractMain
     // check domains
     // domains := domain?.split(',')?.map |s| { s.trim } ?: Str#.emptyList
 
-    dates := DateSpan(Date.fromStr("$month-01"))
+    mstr  := month ?: Date.today.toLocale("YYYY-MM")
+    dates := DateSpan(Date.fromStr("$mstr-01"))
     nump  := 0
     numa  := 0
     start := Duration.now
