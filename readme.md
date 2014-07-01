@@ -18,8 +18,10 @@ also a very low priority project - so don't expect updates often ;)
       logFile    W3C extended log file format log file to analyze
     Options:
       -help, -?         Print usage help
+      -month <Str>      Month to process (defaults to current month)
       -domain <Str>     Domain name of website
       -outDir <File>    Write HTML output to directory (defaults to stdout)
+      -unique <Str>     Cookie name to use for comparing unique users (default uses IP)
 
 ## License
 
