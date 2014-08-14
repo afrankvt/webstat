@@ -39,10 +39,13 @@ class RequestRenderer
       .w("Max: ${p.maxTime}ms")
       .pEnd
 
+    sortStatus := Int:Int[:] { it.ordered=true }
+    p.byStatus.keys.sort.each |k| { sortStatus[k] = p.byStatus[k] }
+
     Util.writeBarPlot(out, p.pagesByDate)
     Util.writeBarPlot(out, p.pagesByTime)
     Util.writeBarPlot(out, p.pagesByWeekday)
-    // Util.writeBarPlot(out, p.byStatus)
+    Util.writeBarPlot(out, sortStatus)
 
     out.h3.w("Most Requested Sections").h3End
     Util.writeRankTable(out, "Section", p.pagesBySection)
