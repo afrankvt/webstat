@@ -40,7 +40,7 @@ class RequestProc : LogProc
   Int scripts := 0
 
   ** Number of requests per Status Code
-  Int:Int byStatus := [:]
+  Int:Int byStatus := [:] { ordered=true }
 
   ** Average time taken for all requests in ms.
   Int avgTime := 0
@@ -95,7 +95,7 @@ class RequestProc : LogProc
     if (Util.isPage(entry))
     {
       // only count 200 for pages
-      //if (sc != 200) return
+      if (sc != 200) return
       pages++
       pagesByDate[dkey] = pagesByDate[dkey] + 1
       pagesByTime[tkey] = pagesByTime[tkey] + 1
