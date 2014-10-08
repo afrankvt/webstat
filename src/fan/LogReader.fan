@@ -26,6 +26,10 @@ class LogReader
       lineNum++
       try
       {
+        // 8-Oct-2014: server crash generated garbage
+        // so just toss out whole line if ever found
+        if (line[0] == 0) { /*echo("SKIP: $line");*/ continue }
+
         if (line.startsWith("#")) parseDirective
         else func(parseEntry)
       }
