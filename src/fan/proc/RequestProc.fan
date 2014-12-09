@@ -78,7 +78,9 @@ class RequestProc : LogProc
     // update time metrics
     if (entry.has("time-taken"))
     {
-      time := entry["time-taken"].val.toInt
+      time := entry["time-taken"].val.toInt(10, false)
+// TODO FIXIT
+if (time == null) return
       sumTime += time
       avgTime = (sumTime.toFloat / total.toFloat).round.toInt
       minTime = minTime.min(time)
