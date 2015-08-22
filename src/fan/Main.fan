@@ -53,6 +53,7 @@ class Main : AbstractMain
     LogReader(logFile.in).each |e|
     {
       // ignore out-of-bound dates
+      if (e.ts == null) return
       if (!dates.contains(e.ts.date)) return
 
       // allow each LogProc to process entry
