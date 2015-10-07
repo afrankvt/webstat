@@ -116,6 +116,7 @@ if (time == null) return
       else if (stem.endsWith(".png")) { images++ }
       else if (stem.endsWith(".jpg")) { images++ }
       else if (stem.endsWith(".gif")) { images++ }
+      else if (stem.endsWith(".svg")) { images++ }
       else if (stem.endsWith(".css")) { styles++ }
       else if (stem.endsWith(".js"))  { scripts++ }
     }

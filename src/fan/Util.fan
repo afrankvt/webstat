@@ -31,6 +31,7 @@ const class Util
     if (stem.endsWith(".png")) return false
     if (stem.endsWith(".jpg")) return false
     if (stem.endsWith(".gif")) return false
+    if (stem.endsWith(".svg")) return false
     if (stem.endsWith(".js"))  return false
     if (stem.endsWith(".ico")) return false
     if (stem == "/robots.txt") return false
