@@ -119,8 +119,12 @@ class ReferrerProc : LogProc
     if (v != null)
     {
       // decode value
-      v = Uri.decodeQuery(v).keys.first
-      searchTerms[v] = (searchTerms[v] ?: 0) + 1
+      try
+      {
+        v = Uri.decodeQuery(v).keys.first
+        searchTerms[v] = (searchTerms[v] ?: 0) + 1
+      }
+      catch {} // ignore?
     }
   }
 
