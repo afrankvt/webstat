@@ -68,13 +68,15 @@ class SummaryRenderer
     }
 
     // user-agents
-    ut := up.mobile + up.desktop + up.unknown
+    ut := up.mobile + up.desktop + up.crawler + up.unknown
     mp := (up.mobile.toFloat  / ut.toFloat * 100f).toLocale("0.00")
     dp := (up.desktop.toFloat / ut.toFloat * 100f).toLocale("0.00")
+    cp := (up.crawler.toFloat / ut.toFloat * 100f).toLocale("0.00")
     kp := (up.unknown.toFloat / ut.toFloat * 100f).toLocale("0.00")
     out.tr.td("colspan='3'").w("User Agents").tdEnd.trEnd
     out.tr.td.w("Mobile") .tdEnd.td.w(up.mobile.toLocale).tdEnd.td.w("${mp}%").tdEnd.trEnd
     out.tr.td.w("Desktop").tdEnd.td.w(up.desktop.toLocale).tdEnd.td.w("${dp}%").tdEnd.trEnd
+    out.tr.td.w("Crawler").tdEnd.td.w(up.desktop.toLocale).tdEnd.td.w("${cp}%").tdEnd.trEnd
     out.tr.td.w("Unknown").tdEnd.td.w(up.unknown.toLocale).tdEnd.td.w("${kp}%").tdEnd.trEnd
 
     out.tableEnd
