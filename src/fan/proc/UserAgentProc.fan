@@ -23,7 +23,11 @@ class UserAgentProc : LogProc
     sets["Opera"]   = UserAgentSet { name="Opera" }
     sets["IE"]      = UserAgentSet { name="IE" }
     sets["Mobile Safari"] = UserAgentSet { name="Mobile Safari" }
+    sets["Crawler"] = UserAgentSet { name="Crawler" }
     sets["Other"]   = UserAgentSet { name="Other" }
+
+    // TEMP
+    sets["Trinkin"] = UserAgentSet { name="Trinkin" }
   }
 
   ** User agent sets fort his log.
@@ -38,6 +42,9 @@ class UserAgentProc : LogProc
   ** Number of unknown requests.
   Int unknown := 0
 
+  ** Number of crawler/bot requests.
+  Int crawler := 0
+
   override Void process(LogEntry entry)
   {
     fv := entry["cs(User-Agent)"]
@@ -51,6 +58,13 @@ class UserAgentProc : LogProc
     {
       if (c.startsWith("Android ")) { count("Android", c["Android ".size..-1]); return true }
       if (c.startsWith("MSIE "))    { count("IE", c["MSIE ".size..-1]); return true }
+      if (c.startsWith("rv:"))
+      {
+        if (ua.comments.any |x| { x.startsWith("Trident/") })
+        {
+          count("IE", c["rv:".size..-1]); return true
+        }
+      }
       return false
     }
 
@@ -74,15 +88,34 @@ class UserAgentProc : LogProc
         return true
       }
       if (p.name == "Opera")   { count("Opera", p.ver);  return true }
+
+      // TEMP
+      if (p.name == "Trinkin") { count("Trinkin", p.ver); return true }
+
       return false
     }
 
-    // check for "invalid" iOS
+    // check comments
     comment = ua.comments.find |c|
     {
+      // check "invalid" iOS -- are these really crawlers?
       if (c == "iPhone") { count("Mobile Safari", "Unknown"); return true }
       if (c == "iPad")   { count("Mobile Safari", "Unknown"); return true }
       if (c == "iPod")   { count("Mobile Safari", "Unknown"); return true }
+
+      // web crawlers
+      if (c.startsWith("bingbot"))      { count("Crawler", c); return true }
+      if (c.startsWith("Googlebot"))    { count("Crawler", c); return true }
+      if (c.startsWith("BLEXBot"))      { count("Crawler", c); return true }
+      if (c.startsWith("AhrefsBot"))    { count("Crawler", c); return true }
+      if (c.startsWith("Yahoo! Slurp")) { count("Crawler", c); return true }
+      if (c.startsWith("YandexBot"))    { count("Crawler", c); return true }
+      if (c.startsWith("MJ12bot"))      { count("Crawler", c); return true }
+      if (c.startsWith("Baiduspider"))  { count("Crawler", c); return true }
+      if (c.startsWith("SeznamBot"))    { count("Crawler", c); return true }
+      if (c.startsWith("SemrushBot"))   { count("Crawler", c); return true }
+      if (c.startsWith("spbot"))        { count("Crawler", c); return true }
+
       return false
     }
 
@@ -90,6 +123,7 @@ class UserAgentProc : LogProc
     if (product == null && comment == null)
     {
       key := entry["cs(User-Agent)"].val
+Env.cur.err.printLine(key)
       // debug[key] = (debug[key] ?: 0) + 1
       count("Other", "")
     }
@@ -104,8 +138,9 @@ class UserAgentProc : LogProc
     // mobile/desktop
     switch (name)
     {
-      case "Android":
+      case "Android":       // fall through
       case "Mobile Safari": mobile++
+      case "Crawler":       crawler++
       case "Other":         unknown++
       default:              desktop++
     }
