@@ -1,4 +1,4 @@
-# webStats
+# webstat
 
 A native [Fantom](http://fantom.org) web log parser/analyzer/viewer for W3C
 extended log file format weblogs.  This is particularly designed to be used
@@ -10,7 +10,7 @@ also a very low priority project - so don't expect updates often ;)
 
 ## Usage:
 
-    $ fan webStats
+    $ fan webstat
 
     Usage:
       webStats [options] <logFile>
