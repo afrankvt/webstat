@@ -1,6 +1,0 @@
-syntax glob
-
-fan.props
-test.log
-.DS_Store
-lib/
