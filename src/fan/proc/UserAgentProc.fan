@@ -23,11 +23,9 @@ class UserAgentProc : LogProc
     sets["Opera"]   = UserAgentSet { name="Opera" }
     sets["IE"]      = UserAgentSet { name="IE" }
     sets["Mobile Safari"] = UserAgentSet { name="Mobile Safari" }
+    sets["AWS ELB"] = UserAgentSet { name="AWS ELB" }
     sets["Crawler"] = UserAgentSet { name="Crawler" }
     sets["Other"]   = UserAgentSet { name="Other" }
-
-    // TEMP
-    sets["Trinkin"] = UserAgentSet { name="Trinkin" }
   }
 
   ** User agent sets fort his log.
@@ -88,10 +86,7 @@ class UserAgentProc : LogProc
         return true
       }
       if (p.name == "Opera")   { count("Opera", p.ver);  return true }
-
-      // TEMP
-      if (p.name == "Trinkin") { count("Trinkin", p.ver); return true }
-
+      if (p.name == "ELB-HealthChecker") { count("AWS ELB", p.ver); return true }
       return false
     }
 
@@ -123,7 +118,7 @@ class UserAgentProc : LogProc
     if (product == null && comment == null)
     {
       key := entry["cs(User-Agent)"].val
-Env.cur.err.printLine(key)
+// Env.cur.err.printLine(key)
       // debug[key] = (debug[key] ?: 0) + 1
       count("Other", "")
     }
