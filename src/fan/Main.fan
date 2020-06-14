@@ -29,6 +29,8 @@ class Main : AbstractMain
   @Opt { help="Cookie name to use for comparing unique users (default uses IP)" }
   Str? unique
 
+  @NoDoc OutStream? out := Env.cur.out
+
   override Int run()
   {
     // check logFile
@@ -61,7 +63,6 @@ class Main : AbstractMain
     }
 
     // check out redirect
-    out := Env.cur.out
     if (outDir != null)
     {
       name := "webStats-" + (domain.isEmpty ? "" : "$domain-") + dates.start.toLocale("YYYY-MM") + ".html"
