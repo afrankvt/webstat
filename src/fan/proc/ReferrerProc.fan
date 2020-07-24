@@ -101,6 +101,8 @@ class ReferrerProc : LogProc
 
     // social networks
     if (fullhost == "t.co")        { addSocial("twitter",  uri); return socialMap }
+    if (fullhost == "lnkd.in")     { addSocial("linkedin", uri); return socialMap }
+    if (host.contains("linkedin")) { addSocial("linkedin", uri); return socialMap }
     if (fullhost == "fb.me")       { addSocial("facebook", uri); return socialMap }
     if (host.contains("facebook")) { addSocial("facebook", uri); return socialMap }
 
